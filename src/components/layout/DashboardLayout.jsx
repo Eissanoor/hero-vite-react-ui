@@ -21,18 +21,18 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar */}
       <div
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out`}
+        } bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out border-r border-restaurant-accent/10`}
       >
-        <div className="flex h-20 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4">
+        <div className="flex h-20 items-center justify-between border-b border-restaurant-accent/20 px-4">
           {sidebarOpen ? (
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-restaurant-primary dark:text-restaurant-secondary">Admin Panel</h1>
           ) : (
-            <h1 className="text-xl font-bold text-gray-800 dark:text-white">AP</h1>
+            <h1 className="text-xl font-bold text-restaurant-primary dark:text-restaurant-secondary">AP</h1>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -68,7 +68,7 @@ const DashboardLayout = ({ children }) => {
             <Link
               key={item.name}
               to={item.path}
-              className="mb-2 flex items-center rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="mb-2 flex items-center rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-restaurant-accent/10 dark:hover:bg-restaurant-primary/10"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -88,13 +88,13 @@ const DashboardLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
-        <div className="absolute bottom-0 w-full border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="absolute bottom-0 w-full border-t border-restaurant-accent/20 p-4">
           <div className="flex items-center justify-between mb-4">
             <ThemeToggle />
             <Button
               onClick={handleLogout}
               variant="ghost"
-              className="w-full justify-start text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-700"
+              className="w-full justify-start text-restaurant-red hover:bg-red-50/50 dark:hover:bg-red-900/10"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -118,12 +118,12 @@ const DashboardLayout = ({ children }) => {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 shadow">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-restaurant-accent/10">
           <div className="px-4 py-6 sm:px-6">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-restaurant-primary dark:text-restaurant-secondary">Dashboard</h1>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">{children}</main>
       </div>
     </div>
   );
@@ -134,7 +134,7 @@ const getIconPath = (icon) => {
     case 'grid':
       return 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z';
     case 'list':
-      return 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2';
+      return 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z';
     case 'package':
       return 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4';
     case 'shopping-cart':
