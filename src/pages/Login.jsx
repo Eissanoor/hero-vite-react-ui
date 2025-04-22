@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Input, Button, Card } from '../components/HeroUI';
 
 const Login = () => {
@@ -8,23 +8,24 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Demo login - in a real app, you would validate against a backend
-    if (email === 'admin@example.com' && password === 'password') {
-      // Simulate loading
-      setTimeout(() => {
-        localStorage.setItem('isAuthenticated', 'true');
-        navigate('/dashboard');
-      }, 1000);
-    } else {
+    try {
+      const result = await login(email, password);
+      
+      if (!result.success) {
+        setError(result.error || 'Invalid email or password');
+        setLoading(false);
+      }
+      // No need to handle success case as the login function already navigates to dashboard
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
       setLoading(false);
-      setError('Invalid email or password. Try admin@example.com / password');
     }
   };
 
