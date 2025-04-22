@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '../HeroUI';
+import ThemeToggle from '../ThemeToggle';
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -21,22 +21,22 @@ const DashboardLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
       <div
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white shadow-md transition-all duration-300 ease-in-out`}
+        } bg-white dark:bg-gray-800 shadow-md transition-all duration-300 ease-in-out`}
       >
-        <div className="flex h-20 items-center justify-between border-b px-4">
+        <div className="flex h-20 items-center justify-between border-b border-gray-200 dark:border-gray-700 px-4">
           {sidebarOpen ? (
-            <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white">Admin Panel</h1>
           ) : (
-            <h1 className="text-xl font-bold text-gray-800">AP</h1>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white">AP</h1>
           )}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="rounded p-1 hover:bg-gray-100"
+            className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -68,7 +68,7 @@ const DashboardLayout = ({ children }) => {
             <Link
               key={item.name}
               to={item.path}
-              className="mb-2 flex items-center rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100"
+              className="mb-2 flex items-center rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -88,45 +88,47 @@ const DashboardLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
-        <div className="absolute bottom-0 w-full border-t p-4">
-          <Button
-            onClick={handleLogout}
-            variant="ghost"
-            className="w-full justify-start text-red-500 hover:bg-red-50 hover:text-red-700"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        <div className="absolute bottom-0 w-full border-t border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <ThemeToggle />
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full justify-start text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-700"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            {sidebarOpen && <span className="ml-3">Logout</span>}
-          </Button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              {sidebarOpen && <span className="ml-3">Logout</span>}
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="bg-white shadow">
+        <header className="bg-white dark:bg-gray-800 shadow">
           <div className="px-4 py-6 sm:px-6">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto bg-gray-100 p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-900 p-6">{children}</main>
       </div>
     </div>
   );
 };
 
-// Helper function to get SVG path for icons
 const getIconPath = (icon) => {
   switch (icon) {
     case 'grid':
