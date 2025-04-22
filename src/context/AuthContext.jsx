@@ -8,24 +8,76 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Fetch user profile data from API
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ME}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to fetch user profile');
+      }
+
+      // Extract user data from the data.data property
+      const userData = data.data;
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // If we can't fetch the profile, we should log the user out
+      logout();
+      throw error;
+    }
+  };
+
   // Check for authentication on initial load
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-      setIsAuthenticated(authStatus);
-
-      // If not authenticated and not already on login page, redirect to login
-      if (!authStatus && location.pathname !== '/login') {
-        navigate('/login', { replace: true });
+      setLoading(true);
+      
+      if (authStatus) {
+        try {
+          await fetchUserProfile();
+          setIsAuthenticated(true);
+          
+          // If on login page, redirect to dashboard
+          if (location.pathname === '/login') {
+            navigate('/dashboard', { replace: true });
+          }
+        } catch (error) {
+          // If profile fetch fails, consider user not authenticated
+          setIsAuthenticated(false);
+          if (location.pathname !== '/login') {
+            navigate('/login', { replace: true });
+          }
+        }
+      } else {
+        setIsAuthenticated(false);
+        // If not authenticated and not already on login page, redirect to login
+        if (location.pathname !== '/login') {
+          navigate('/login', { replace: true });
+        }
       }
       
-      // If authenticated and on login page, redirect to dashboard
-      if (authStatus && location.pathname === '/login') {
-        navigate('/dashboard', { replace: true });
-      }
+      setLoading(false);
     };
     
     checkAuth();
@@ -51,9 +103,20 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('isAuthenticated', 'true');
       localStorage.setItem('token', data.token);
       
-      setIsAuthenticated(true);
-      navigate('/dashboard', { replace: true });
-      return { success: true };
+      // Fetch user profile with the new token
+      try {
+        const userProfile = await fetchUserProfile();
+        setIsAuthenticated(true);
+        navigate('/dashboard', { replace: true });
+        return { success: true, user: userProfile };
+      } catch (profileError) {
+        // If profile fetch fails but login succeeded, still consider it a success
+        // but log the error
+        console.error('Error fetching profile after login:', profileError);
+        setIsAuthenticated(true);
+        navigate('/dashboard', { replace: true });
+        return { success: true };
+      }
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -69,7 +132,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout, fetchUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

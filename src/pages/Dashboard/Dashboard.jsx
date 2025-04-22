@@ -1,8 +1,38 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/HeroUI';
+import { useAuth } from '../../context/AuthContext';
 
 const Dashboard = () => {
+  const { user, loading, fetchUserProfile } = useAuth();
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        setProfileLoading(true);
+        // If we already have user data from context, use it
+        if (user) {
+          setUserProfile(user);
+        } else {
+          // Otherwise fetch it
+          const userData = await fetchUserProfile();
+          setUserProfile(userData);
+        }
+        setError(null);
+      } catch (err) {
+        console.error('Error loading user profile:', err);
+        setError('Failed to load user profile');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadUserProfile();
+  }, [user, fetchUserProfile]);
+
   const stats = [
     { label: 'Total Products', value: 45 },
     { label: 'Menu Items', value: 23 },
@@ -13,6 +43,37 @@ const Dashboard = () => {
   return (
     <div>
       <h1 className="mb-6 text-2xl font-bold">Dashboard Overview</h1>
+      
+      {/* User Profile Card */}
+      <Card className="mb-8 border-l-4 border-hero-primary">
+        <Card.Content className="p-6">
+          {profileLoading ? (
+            <p>Loading user profile...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : userProfile ? (
+            <div>
+              <h2 className="text-xl font-bold mb-4">Welcome!</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Email</p>
+                  <p>{userProfile.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">User ID</p>
+                  <p className="truncate">{userProfile._id}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Account Created</p>
+                  <p>{new Date(userProfile.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p>No user profile data available</p>
+          )}
+        </Card.Content>
+      </Card>
       
       <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
