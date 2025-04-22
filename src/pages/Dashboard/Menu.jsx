@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/HeroUI';
-import { addMegaMenu, getMegaMenus } from '../../api/megamenu';
+import Spinner from '../../components/ui/Spinner';
+import { addMegaMenu, getMegaMenus, updateMegaMenu, deleteMegaMenu } from '../../api/megamenu';
 import { useAuth } from '../../context/AuthContext';
 
 const Menu = () => {
@@ -39,11 +40,11 @@ const Menu = () => {
     setError('');
     setSuccess('');
     if (item) {
-      setFormData({ name: item.name, pic: null });
+      setFormData({ name: item.name, pic: null, prevPic: item.pic, id: item._id });
       setIsEditing(true);
-      setCurrentId(item.id);
+      setCurrentId(item._id);
     } else {
-      setFormData({ name: '', picture: 'https://via.placeholder.com/100' });
+      setFormData({ name: '', pic: null, prevPic: null, id: null });
       setIsEditing(false);
     }
     setModalOpen(true);
@@ -64,42 +65,67 @@ const Menu = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.pic) {
-      setError('Both name and picture are required.');
-      return;
-    }
     setLoading(true);
     setError('');
     setSuccess('');
     try {
-      await addMegaMenu({ name: formData.name, pic: formData.pic, token });
-      setSuccess('Menu item added successfully!');
+      if (isEditing) {
+        if (!formData.name) {
+          setError('Name is required.');
+          setLoading(false);
+          return;
+        }
+        await updateMegaMenu({ id: formData.id, name: formData.name, pic: formData.pic, token });
+        setSuccess('Menu item updated successfully!');
+      } else {
+        if (!formData.name || !formData.pic) {
+          setError('Both name and picture are required.');
+          setLoading(false);
+          return;
+        }
+        await addMegaMenu({ name: formData.name, pic: formData.pic, token });
+        setSuccess('Menu item added successfully!');
+      }
       setModalOpen(false);
-      setFormData({ name: '', pic: null });
+      setFormData({ name: '', pic: null, prevPic: null, id: null });
       // Refresh menu list
       const resp = await getMegaMenus(token);
       setMenuItems(resp.data || []);
     } catch (err) {
-      setError(err.message || 'Failed to add menu item');
+      setError(err.message || 'Failed to save menu item');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this menu item?')) {
-      setMenuItems(menuItems.filter(item => item.id !== id));
+      setLoading(true);
+      setError('');
+      setSuccess('');
+      try {
+        await deleteMegaMenu({ id, token });
+        setMenuItems(menuItems.filter(item => (item._id || item.id) !== id));
+        setSuccess('Menu item deleted successfully!');
+      } catch (err) {
+        setError(err.message || 'Failed to delete menu item');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   return (
-    <div>
+    <div className="relative">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Menu Items</h1>
         <Button onClick={() => handleOpenModal()}>Add New Menu Item</Button>
       </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+      {/* Spinner overlay for main API loading (fetch, update, delete, add) */}
+      {loading && <Spinner overlay size={56} />}
+
+      <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 ${loading ? 'opacity-40 pointer-events-none' : ''}`}>
         {menuItems.map((item) => (
           <Card key={item._id || item.id} className="overflow-hidden hover:shadow-lg">
             <img src={item.pic} alt={item.name} className="h-40 w-full object-cover" />
@@ -109,7 +135,7 @@ const Menu = () => {
                 <Button variant="outline" size="sm" onClick={() => handleOpenModal(item)}>
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item.id)}>
+                <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item._id || item.id)}>
                   Delete
                 </Button>
               </div>
@@ -121,7 +147,9 @@ const Menu = () => {
       {/* Modal for Add/Edit Menu Item */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-lg">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-lg relative">
+            {/* Spinner overlay for modal actions */}
+            {loading && <Spinner overlay size={36} />}
             <div className="border-b p-4">
               <h3 className="text-lg font-medium">{isEditing ? 'Edit Menu Item' : 'Add New Menu Item'}</h3>
             </div>
@@ -146,14 +174,18 @@ const Menu = () => {
                     name="pic"
                     accept="image/*"
                     onChange={handleInputChange}
-                    required
                     className="block w-full border rounded px-3 py-2 text-sm"
                   />
                 </div>
-                {formData.pic && (
+                {/* Preview: show new selected image or previous image if editing */}
+                {(formData.pic || formData.prevPic) && (
                   <div className="mt-2">
                     <p className="mb-1 text-sm font-medium">Preview:</p>
-                    <img src={URL.createObjectURL(formData.pic)} alt="Preview" className="h-32 w-full rounded object-cover" />
+                    <img
+                      src={formData.pic ? URL.createObjectURL(formData.pic) : formData.prevPic}
+                      alt="Preview"
+                      className="h-32 w-full rounded object-cover"
+                    />
                   </div>
                 )}
               </div>
