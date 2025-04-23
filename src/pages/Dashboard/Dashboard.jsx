@@ -1,13 +1,14 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/HeroUI';
 import { useAuth } from '../../context/AuthContext';
+import API_CONFIG from '../../config/api';
 
 const Dashboard = () => {
   const { user, loading, fetchUserProfile } = useAuth();
   const [userProfile, setUserProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [statsData, setStatsData] = useState({ totalProducts:0, menuItems:0, ordersToday:0, revenue:0 });
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -33,11 +34,30 @@ const Dashboard = () => {
     loadUserProfile();
   }, [user, fetchUserProfile]);
 
-  const stats = [
-    { label: 'Total Products', value: 45 },
-    { label: 'Menu Items', value: 23 },
-    { label: 'Orders Today', value: 12 },
-    { label: 'Revenue', value: '$1,245' },
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_CONFIG.BASE_URL}/api/dashboard/stats`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const json = await res.json();
+        if (json.success) setStatsData(json.data);
+      } catch (err) {
+        console.error('Error loading dashboard stats:', err);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const statsArr = [
+    { label: 'Total Products', value: statsData.totalProducts },
+    { label: 'Menu Items', value: statsData.menuItems },
+    { label: 'Orders Today', value: statsData.ordersToday },
+    { label: 'Revenue', value: `${statsData.revenue}` }, 
   ];
 
   return (
@@ -76,7 +96,7 @@ const Dashboard = () => {
       </Card>
       
       <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsArr.map((stat) => (
           <Card key={stat.label} className="border-l-4 border-hero-primary">
             <Card.Content className="flex flex-col p-6">
               <span className="text-sm font-medium text-gray-500">{stat.label}</span>

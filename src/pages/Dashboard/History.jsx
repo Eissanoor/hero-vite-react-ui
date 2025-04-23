@@ -82,7 +82,7 @@ const History = () => {
                 <tbody>
                   {historyData.map(item => (
                     <tr key={item._id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-medium text-hero-primary">{item._id}</td>
+                      <td className="p-4 font-medium text-hero-primary">#{item.orderid}</td>
                       <td className="p-4">{new Date(item.createdAt).toLocaleDateString()}</td>
                       <td className="p-4">{item.products.reduce((sum, p) => sum + p.quantity, 0)} items</td>
                       <td className="p-4">${item.totalAmount}</td>
@@ -103,7 +103,7 @@ const History = () => {
           <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
             <button onClick={() => setSelectedOrder(null)} className="absolute top-2 right-2 text-xl">×</button>
             <h2 className="text-xl font-bold mb-4">Order Details</h2>
-            <p className="mb-2"><strong>Order ID:</strong> {selectedOrder._id}</p>
+            <p className="mb-2"><strong>Order ID:</strong> {selectedOrder.orderid}</p>
             <p className="mb-2"><strong>Date:</strong> {new Date(selectedOrder.createdAt).toLocaleString()}</p>
             <p className="mb-4"><strong>Status:</strong> {selectedOrder.status}</p>
             <table className="w-full mb-4">
