@@ -9,7 +9,6 @@ const Orders = () => {
   const [historyData, setHistoryData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   const fetchOrders = async () => {
@@ -25,7 +24,6 @@ const Orders = () => {
         },
       });
       const data = await res.json();
-      console.log('Orders data:', data);
       if (data.success) {
         setHistoryData(data?.data || []);
       } else {
