@@ -256,10 +256,10 @@ const NewOrder = () => {
       </div>
 
       {/* Cart sidebar */}
-      <div className="w-full lg:w-[350px] border-l bg-white p-6">
+      <div className="w-full lg:w-[350px] border-l bg-white p-6 dark:bg-gray-800">
         <div className="flex justify-between items-center mb-4">
           <h2 className="mb-4 text-xl font-bold">Your Cart</h2>
-          <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full">
+          <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full dark:bg-gray-700">
             {cartItems.length} items
           </span>
         </div>
@@ -288,7 +288,7 @@ const NewOrder = () => {
               </div>
               <div className="flex justify-between mt-2">
                 {/* <div className="flex-1"> */}
-                <div className="flex space-x-2 items-center bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex space-x-2 items-center bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200">
                   <button
                     className="rounded px-2 text-gray-500 hover:bg-gray-100"
                     onClick={() => updateQuantity(item._id, -1)}
