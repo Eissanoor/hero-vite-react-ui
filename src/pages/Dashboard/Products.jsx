@@ -189,7 +189,7 @@ const Products = () => {
                     </td>
                     <td className="p-3 font-medium">{product.name}</td>
                     <td className="p-3">{product.description}</td>
-                    <td className="p-3">${product.price.toFixed(2)}</td>
+                    <td className="p-3">{product.price.toFixed(2)}</td>
                     <td className="p-3">{product.type}</td>
                     <td className="p-3">
                       <div className="flex space-x-2">
