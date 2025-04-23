@@ -3,6 +3,8 @@ import { Card, Button } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api';
 import Spinner from '../../components/ui/Spinner';
 import { useNavigate } from 'react-router-dom';
+import Receipt from '../../components/Receipt';
+import ReactDOMServer from 'react-dom/server';
 
 const NewOrder = () => {
   const navigate = useNavigate();
@@ -13,52 +15,11 @@ const NewOrder = () => {
 
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
-
-  const barcodeTypes = [
-    {
-      id: 1,
-      title: 'GLN',
-      subtitle: 'Global Location Numbers',
-      description: 'Physical and Functional locations',
-      usage: 'GLNs uniquely identify locations and parties with global interoperability',
-      image: '/images/barcode1.png'
-    },
-    {
-      id: 2,
-      title: 'GS1 EAN 13',
-      description: 'Retail Items, Food, Non Food, Fresh Products and Beverages',
-      usage: 'Ensures globally unique product identification for seamless trade',
-      image: '/images/barcode2.png'
-    },
-    {
-      id: 3,
-      title: 'QR Code',
-      description: 'Retail Items, Food, Non Food, Fresh Products and Beverages',
-      usage: 'QR Codes store data for quick scanning, enabling efficient access and interaction',
-      image: '/images/qrcode.png'
-    },
-    {
-      id: 4,
-      title: 'GTIN-13 (EAN/UCC-13)',
-      description: 'Food and Non Food Items',
-      usage: 'Uniquely identifies products globally, ensuring seamless trade and tracking',
-      image: '/images/barcode3.png'
-    },
-    {
-      id: 5,
-      title: 'GTIN-14 (GS1-128 or ITF-14)',
-      description: 'Pallets, Boxes/Cartons',
-      usage: 'Identifies product groupings or cases, ensuring efficient supply chain management',
-      image: '/images/barcode4.png'
-    },
-    {
-      id: 6,
-      title: 'GS1 GTIN, UPC/GTIN-13',
-      description: 'Barcode for SABER Certificate',
-      usage: 'Barcode for SABER Certificate',
-      image: '/images/barcode5.png'
-    }
-  ];
+  const [orderreceipt, setorderreceipt] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Function to fetch products from API
   const fetchProducts = async () => {
@@ -69,8 +30,7 @@ const NewOrder = () => {
         headers: { Authorization: token ? `Bearer ${token}` : undefined }
       });
       const result = await res.json();
-      console.log(result);
-      
+
       if (result.success) setProducts(result.data);
       else console.error('Failed to fetch products:', result);
     } catch (err) {
@@ -79,12 +39,19 @@ const NewOrder = () => {
       setLoadingProducts(false);
     }
   };
-  
+
   // Load products on mount
   useEffect(() => {
     fetchProducts();
   }, []);
-  
+
+  // Get current products
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const addToCart = (item) => {
     setCartItems(prevItems => {
@@ -133,6 +100,7 @@ const NewOrder = () => {
 
 
   const handleCheckout = async () => {
+    setorderreceipt(true);
     try {
       const orderData = {
         products: cartItems.map((item) => ({
@@ -150,22 +118,51 @@ const NewOrder = () => {
         },
         body: JSON.stringify(orderData)
       });
-      const result = await response.json();
-      console.log(result);
-      
+      setorderreceipt(false);
       if (response.ok) {
+        const orderResult = await response.json();
+        console.log('Order Response:', orderResult);
+        // Open receipt in new window
+        const receiptWindow = window.open('', '_blank');
+        receiptWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Order Receipt</title>
+              <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+            </head>
+            <body>
+              <div id="receipt">
+                ${ReactDOMServer.renderToString(
+          <Receipt
+            orderData={orderResult}
+            items={cartItems}
+          />
+        )}
+              </div>
+              <script>
+                window.onload = function() {
+                  window.print();
+                }
+              </script>
+            </body>
+          </html>
+        `);
+        receiptWindow.document.close();
+
         // Clear the cart after successful order
         setCartItems([]);
         localStorage.removeItem('cartItemss');
-        alert('Order placed successfully!');
+        // alert('Order placed successfully!');
         // Navigate to orders page
         navigate('/dashboard/orders');
       } else {
-        throw new Error(result.message || 'Failed to place order');
+        throw new Error(response.message || 'Failed to place order');
       }
     } catch (error) {
-      console.error("Checkout failed:", error);
-      alert('Failed to place order: ' + error.message);
+      console.error('Error placing order:', error);
+      setorderreceipt(false);
+      // alert(error.message);
     }
   };
 
@@ -184,40 +181,77 @@ const NewOrder = () => {
 
         {/* Grid of items */}
         {loadingProducts ? (
-        <div className="flex justify-center py-8"><Spinner size={32} /></div>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
-          {products.map((item) => (
-            <Card key={item.id} className="flex flex-col overflow-hidden border border-gray-200">
-              <div className="flex-1 p-4">
-                {/* Barcode display area */}
-                <div className="mb-4 flex h-32 w-full items-center justify-center">
-                  {/* <div className="h-16 w-48 "> */}
-                  <img src={item.pic} alt={item.name} className="object-contain mb-3" />
-                  {/* </div> */}
-                </div>
+          <div className="flex justify-center py-8"><Spinner size={32} /></div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
+              {currentProducts.map((item) => (
+                <Card key={item.id} className="flex flex-col overflow-hidden border border-gray-200">
+                  <div className="flex-1 p-4">
+                    {/* Barcode display area */}
+                    <div className="mb-4 flex h-32 w-full items-center justify-center">
+                      {/* <div className="h-16 w-48 "> */}
+                      <img src={item.pic} alt={item.name} className="object-contain mb-3" />
+                      {/* </div> */}
+                    </div>
 
-                {/* Item details */}
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-hero-primary">{item.name}</h3>
-                  <p className="text-sm text-green-600">{item.description}</p>
-                  <p className="text-md text-gray-500">Price: {item.price.toFixed(2)}</p>
-                  <p className="text-xs text-gray-500">Type: {item.type}</p>
+                    {/* Item details */}
+                    <div className="space-y-2">
+                      <h3 className="text-lg font-semibold text-hero-primary">{item.name}</h3>
+                      <p className="text-sm text-green-600">{item.description}</p>
+                      <p className="text-md text-gray-500">Price: {item.price.toFixed(2)}</p>
+                      <p className="text-xs text-gray-500">Type: {item.type}</p>
+                    </div>
+                  </div>
+
+                  {/* Add to cart button */}
+                  <div className="border-t p-3">
+                    <Button
+                      onClick={() => addToCart(item)}
+                      className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark"
+                    >
+                      Add Options
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {products.length > itemsPerPage && (
+              <div className="mt-6 flex justify-center">
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 text-sm"
+                  >
+                    Previous
+                  </Button>
+                  {[...Array(Math.ceil(products.length / itemsPerPage))].map((_, index) => (
+                    <Button
+                      key={index + 1}
+                      onClick={() => paginate(index + 1)}
+                      className={`px-4 py-2 text-sm ${
+                        currentPage === index + 1
+                          ? 'bg-hero-primary text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      {index + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
+                    className="px-4 py-2 text-sm"
+                  >
+                    Next
+                  </Button>
                 </div>
               </div>
-
-              {/* Add to cart button */}
-              <div className="border-t p-3">
-                <Button
-                  onClick={() => addToCart(item)}
-                  className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark"
-                >
-                  Add Options
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+            )}
+          </>
         )}
       </div>
 
@@ -233,27 +267,27 @@ const NewOrder = () => {
           {/* Cart items */}
           {cartItems.map((item) => (
             <div className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm'>
-                <div className="flex justify-end">
+              <div className="flex justify-end">
                 <button
                   className="text-lg font-bold text-gray-400 hover:text-gray-600  border-2 border-red-300 hover:border-red-600 rounded-lg px-2"
                   onClick={() => removeFromCart(item._id)}
                 >
-                  X 
+                  X
                 </button>
-                </div>
-            <div key={item.id} className="flex items-start space-x-4">
-              <img
-                src={item.pic || ""}
-                alt={item.name}
-                className="w-24 h-20 object-contain mb-1 border border-gray-200 rounded-lg"
-              />
+              </div>
+              <div key={item.id} className="flex items-start space-x-4">
+                <img
+                  src={item.pic || ""}
+                  alt={item.name}
+                  className="w-24 h-20 object-contain mb-1 border border-gray-200 rounded-lg"
+                />
                 <div className="flex flex-col">
-                <h4 className="font-medium">{item.name}</h4>
-                <p className="text-sm text-gray-500 mt-4">Type: {item.type}</p>
+                  <h4 className="font-medium">{item.name}</h4>
+                  <p className="text-sm text-gray-500 mt-4">Type: {item.type}</p>
                 </div>
-            </div>
-             <div className="flex justify-between mt-2">
-             {/* <div className="flex-1"> */}
+              </div>
+              <div className="flex justify-between mt-2">
+                {/* <div className="flex-1"> */}
                 <div className="flex space-x-2 items-center bg-gray-50 rounded-md border border-gray-200">
                   <button
                     className="rounded px-2 text-gray-500 hover:bg-gray-100"
@@ -269,11 +303,11 @@ const NewOrder = () => {
                     +
                   </button>
                 </div>
-              {/* </div> */}
-              <div className="text-right">
-                <div className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</div>
+                {/* </div> */}
+                <div className="text-right">
+                  <div className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</div>
+                </div>
               </div>
-             </div>
             </div>
           ))}
 
@@ -292,8 +326,10 @@ const NewOrder = () => {
                 <span>Total:</span>
                 <span>Rs {calculateTotals().subtotal.toFixed(2)}</span>
               </div>
-              <Button className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark"  onClick={handleCheckout}>
-                Save & Next
+              <Button className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark" onClick={handleCheckout}
+                isLoading={orderreceipt}
+                isDisabled={orderreceipt}>
+                {orderreceipt ? "Processing..." : "Proceed to Order"}
               </Button>
             </div>
           )}
