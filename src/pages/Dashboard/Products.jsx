@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Input } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api.js';
 
@@ -38,12 +38,12 @@ const Products = () => {
         description: product.description || '',
         price: product.price ? product.price.toString() : '',
         type: product.type || '',
-        megaMenu: product.megaMenu || '',
+        megaMenu: product.megaMenu?._id || '',
         picture: '', // File input is always empty on edit
       });
       setPicturePreview(product.pic || '');
       setIsEditing(true);
-      setCurrentId(product.id);
+      setCurrentId(product._id);
     } else {
       setFormData({ name: '', description: '', price: '', type: '', picture: '', megaMenu: '' });
       setPicturePreview('');
@@ -128,9 +128,24 @@ const Products = () => {
     }
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      setProducts(products.filter(p => p.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/products/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+      });
+      const data = await res.json();
+      if (data.success) {
+        fetchProducts();
+      } else {
+        alert('Failed to delete product');
+        console.error('Delete failed:', data);
+      }
+    } catch (err) {
+      alert('Error deleting product');
+      console.error(err);
     }
   };
 
@@ -157,7 +172,7 @@ const Products = () => {
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product.id} className="border-b hover:bg-gray-50">
+                  <tr key={product._id} className="border-b hover:bg-gray-50">
                     <td className="p-3">
                       <img src={product.pic} alt={product.name} className="h-12 w-12 rounded object-cover" />
                     </td>
@@ -170,7 +185,7 @@ const Products = () => {
                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(product)}>
                           Edit
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product.id)}>
+                        <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product._id)}>
                           Delete
                         </Button>
                       </div>
