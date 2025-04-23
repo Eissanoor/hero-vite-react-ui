@@ -29,7 +29,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/" element={<Login />} />
             <Route path="/login" element={<Login />} />
             
             <Route path="/dashboard" element={<ProtectedRoute element={<DashboardLayout><Dashboard /></DashboardLayout>} />} />

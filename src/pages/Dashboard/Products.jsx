@@ -1,57 +1,131 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/HeroUI';
+import API_CONFIG from '../../config/api.js';
 
 const Products = () => {
-  const initialProducts = [
-    { id: 1, name: 'Espresso', description: 'Strong black coffee', price: 3.99, type: 'Coffee', picture: 'https://via.placeholder.com/100' },
-    { id: 2, name: 'Cappuccino', description: 'Coffee with steamed milk', price: 4.99, type: 'Coffee', picture: 'https://via.placeholder.com/100' },
-    { id: 3, name: 'Croissant', description: 'Buttery and flaky', price: 2.99, type: 'Bakery', picture: 'https://via.placeholder.com/100' }
-  ];
-
-  const [products, setProducts] = useState(initialProducts);
+  const [products, setProducts] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '', price: '', type: '', picture: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', price: '', type: '', picture: '', megaMenu: '' });
+  const [picturePreview, setPicturePreview] = useState('');
+  const [menus, setMenus] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
-  
+
+  // Function to fetch products from API
+  const fetchProducts = async () => {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/products`, {
+        headers: { Authorization: token ? `Bearer ${token}` : undefined }
+      });
+      const result = await res.json();
+      if (result.success) setProducts(result.data);
+      else console.error('Failed to fetch products:', result);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
+  };
+
+  // Load products on mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const handleOpenModal = (product = null) => {
     if (product) {
-      setFormData({ ...product, price: product.price.toString() });
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price ? product.price.toString() : '',
+        type: product.type || '',
+        megaMenu: product.megaMenu || '',
+        picture: '', // File input is always empty on edit
+      });
+      setPicturePreview(product.pic || '');
       setIsEditing(true);
       setCurrentId(product.id);
     } else {
-      setFormData({ name: '', description: '', price: '', type: '', picture: 'https://via.placeholder.com/100' });
+      setFormData({ name: '', description: '', price: '', type: '', picture: '', megaMenu: '' });
+      setPicturePreview('');
       setIsEditing(false);
     }
     setModalOpen(true);
   };
+
+  useEffect(() => {
+    if (modalOpen) {
+      const token = localStorage.getItem('token');
+      fetch(`${API_CONFIG.BASE_URL}/api/megamenu/`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) setMenus(data.data);
+          else {
+            setMenus([]);
+            console.error('Failed to fetch menus:', data);
+          }
+        })
+        .catch(err => {
+          setMenus([]);
+          console.error('Error fetching menus:', err);
+        });
+    }
+  }, [modalOpen]);
 
   const handleCloseModal = () => {
     setModalOpen(false);
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const { name, value, type } = e.target;
+    if (name === 'picture' && e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData({ ...formData, picture: file });
+      setPicturePreview(URL.createObjectURL(file));
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const newProduct = {
-      ...formData,
-      price: parseFloat(formData.price),
-      id: isEditing ? currentId : Date.now(),
-    };
-    
-    if (isEditing) {
-      setProducts(products.map(p => p.id === currentId ? newProduct : p));
-    } else {
-      setProducts([...products, newProduct]);
+    const payload = new FormData();
+    payload.append('name', formData.name);
+    payload.append('description', formData.description);
+    payload.append('price', formData.price);
+    payload.append('type', formData.type);
+    payload.append('megaMenu', formData.megaMenu);
+    if (formData.picture) {
+      payload.append('pic', formData.picture);
     }
-    
-    handleCloseModal();
+    try {
+      const token = localStorage.getItem('token');
+      // Determine endpoint and HTTP method based on editing state
+      const url = isEditing
+        ? `${API_CONFIG.BASE_URL}/api/products/${currentId}`
+        : `${API_CONFIG.BASE_URL}/api/products`;
+      const method = isEditing ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined
+        },
+        body: payload,
+      });
+      const data = await response.json();
+      if (data.success) {
+        handleCloseModal();
+        // Refresh product list
+        fetchProducts();
+      } else {
+        alert('Failed to add/update product');
+      }
+    } catch (err) {
+      alert('Error submitting form');
+    }
   };
 
   const handleDelete = (id) => {
@@ -85,7 +159,7 @@ const Products = () => {
                 {products.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
                     <td className="p-3">
-                      <img src={product.picture} alt={product.name} className="h-12 w-12 rounded object-cover" />
+                      <img src={product.pic} alt={product.name} className="h-12 w-12 rounded object-cover" />
                     </td>
                     <td className="p-3 font-medium">{product.name}</td>
                     <td className="p-3">{product.description}</td>
@@ -156,30 +230,49 @@ const Products = () => {
                 
                 <div>
                   <label className="mb-1 block text-sm font-medium">Type</label>
-                  <Input
+                  <select
                     name="type"
                     value={formData.type}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter product type"
-                  />
+                    className="w-full rounded border px-3 py-2"
+                  >
+                    <option value="">Select type</option>
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                  </select>
                 </div>
                 
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Picture URL</label>
-                  <Input
-                    name="picture"
-                    value={formData.picture}
+                  <label className="mb-1 block text-sm font-medium">Menu</label>
+                  <select
+                    name="megaMenu"
+                    value={formData.megaMenu}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter image URL"
+                    className="w-full rounded border px-3 py-2"
+                  >
+                    <option value="">Select menu</option>
+                    {menus.map(menu => (
+                      <option key={menu._id} value={menu._id}>{menu.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-sm font-medium">Picture</label>
+                  <input
+                    name="picture"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleInputChange}
+                    className="w-full rounded border px-3 py-2"
                   />
                 </div>
-                
-                {formData.picture && (
+                {picturePreview && (
                   <div className="mt-2">
                     <p className="mb-1 text-sm font-medium">Preview:</p>
-                    <img src={formData.picture} alt="Preview" className="h-16 w-16 rounded object-cover" />
+                    <img src={picturePreview} alt="Preview" className="h-16 w-16 rounded object-cover" />
                   </div>
                 )}
               </div>
