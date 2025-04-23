@@ -88,7 +88,7 @@ const DashboardLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
-        <div className="absolute bottom-0 w-full border-t border-restaurant-accent/20 p-4">
+        <div className="absolute bottom-0 border-t border-restaurant-accent/20 p-4">
           <div className="flex items-center justify-between mb-4">
             <ThemeToggle />
             <Button
