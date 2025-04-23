@@ -82,7 +82,7 @@ const History = () => {
                 <tbody>
                   {historyData.map(item => (
                     <tr key={item._id} className="border-b hover:bg-gray-50">
-                      <td className="p-4 font-medium text-hero-primary">{item._id}</td>
+                      <td className="p-4 font-medium text-hero-primary">#{item.orderid}</td>
                       <td className="p-4">{new Date(item.createdAt).toLocaleDateString()}</td>
                       <td className="p-4">{item.products.reduce((sum, p) => sum + p.quantity, 0)} items</td>
                       <td className="p-4">${item.totalAmount}</td>
