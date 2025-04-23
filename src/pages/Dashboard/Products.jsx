@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Card, Button, Input } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api.js';
+import Spinner from '../../components/ui/Spinner';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [formData, setFormData] = useState({ name: '', description: '', price: '', type: '', picture: '', megaMenu: '' });
   const [picturePreview, setPicturePreview] = useState('');
   const [menus, setMenus] = useState([]);
+  const [loadingMenus, setLoadingMenus] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
 
   // Function to fetch products from API
   const fetchProducts = async () => {
+    setLoadingProducts(true);
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_CONFIG.BASE_URL}/api/products`, {
@@ -23,6 +29,8 @@ const Products = () => {
       else console.error('Failed to fetch products:', result);
     } catch (err) {
       console.error('Error fetching products:', err);
+    } finally {
+      setLoadingProducts(false);
     }
   };
 
@@ -54,6 +62,7 @@ const Products = () => {
 
   useEffect(() => {
     if (modalOpen) {
+      setLoadingMenus(true);
       const token = localStorage.getItem('token');
       fetch(`${API_CONFIG.BASE_URL}/api/megamenu/`, {
         headers: {
@@ -63,15 +72,12 @@ const Products = () => {
         .then(res => res.json())
         .then(data => {
           if (data.success) setMenus(data.data);
-          else {
-            setMenus([]);
-            console.error('Failed to fetch menus:', data);
-          }
+          else console.error('Failed to fetch menus:', data);
         })
         .catch(err => {
-          setMenus([]);
           console.error('Error fetching menus:', err);
-        });
+        })
+        .finally(() => setLoadingMenus(false));
     }
   }, [modalOpen]);
 
@@ -92,6 +98,7 @@ const Products = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     const payload = new FormData();
     payload.append('name', formData.name);
     payload.append('description', formData.description);
@@ -120,16 +127,18 @@ const Products = () => {
         handleCloseModal();
         // Refresh product list
         fetchProducts();
-      } else {
-        alert('Failed to add/update product');
-      }
+      } else alert('Failed to add/update product');
     } catch (err) {
       alert('Error submitting form');
+      console.error(err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
+    setDeletingId(id);
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_CONFIG.BASE_URL}/api/products/${id}`, {
@@ -137,15 +146,14 @@ const Products = () => {
         headers: { Authorization: token ? `Bearer ${token}` : undefined }
       });
       const data = await res.json();
-      if (data.success) {
-        fetchProducts();
-      } else {
-        alert('Failed to delete product');
-        console.error('Delete failed:', data);
+      if (data.success) fetchProducts();
+      else {
+        alert('Failed to delete product'); console.error('Delete failed:', data);
       }
     } catch (err) {
-      alert('Error deleting product');
-      console.error(err);
+      alert('Error deleting product'); console.error(err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -156,6 +164,9 @@ const Products = () => {
         <Button onClick={() => handleOpenModal()}>Add New Product</Button>
       </div>
       
+      {loadingProducts ? (
+        <div className="flex justify-center py-8"><Spinner size={32} /></div>
+      ) : (
       <Card>
         <Card.Content>
           <div className="overflow-x-auto">
@@ -185,8 +196,8 @@ const Products = () => {
                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(product)}>
                           Edit
                         </Button>
-                        <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product._id)}>
-                          Delete
+                        <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product._id)} disabled={deletingId === product._id}>
+                          {deletingId === product._id ? <Spinner size={16} /> : 'Delete'}
                         </Button>
                       </div>
                     </td>
@@ -197,7 +208,8 @@ const Products = () => {
           </div>
         </Card.Content>
       </Card>
-
+      )}
+      
       {/* Modal for Add/Edit Product */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -261,18 +273,22 @@ const Products = () => {
                 
                 <div>
                   <label className="mb-1 block text-sm font-medium">Menu</label>
-                  <select
-                    name="megaMenu"
-                    value={formData.megaMenu}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full rounded border px-3 py-2"
-                  >
-                    <option value="">Select menu</option>
-                    {menus.map(menu => (
-                      <option key={menu._id} value={menu._id}>{menu.name}</option>
-                    ))}
-                  </select>
+                  {loadingMenus ? (
+                    <Spinner size={20} />
+                  ) : (
+                    <select
+                      name="megaMenu"
+                      value={formData.megaMenu}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full rounded border px-3 py-2"
+                    >
+                      <option value="">Select menu</option>
+                      {menus.map(menu => (
+                        <option key={menu._id} value={menu._id}>{menu.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium">Picture</label>
@@ -296,8 +312,8 @@ const Products = () => {
                 <Button variant="outline" type="button" onClick={handleCloseModal}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {isEditing ? 'Update' : 'Add'} Product
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? <Spinner size={16} /> : isEditing ? 'Update' : 'Add'} Product
                 </Button>
               </div>
             </form>
