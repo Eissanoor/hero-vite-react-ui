@@ -10,5 +10,5 @@ export {
   Card,
   Badge,
   Input,
-  Avatar
+  Avatar,
 };

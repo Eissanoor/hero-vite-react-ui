@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import Products from "./pages/Dashboard/Products";
 import Menu from "./pages/Dashboard/Menu";
 import Orders from "./pages/Dashboard/Orders";
+import NewOrder from "./pages/Dashboard/NewOrder";
 import History from "./pages/Dashboard/History";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/dashboard/products" element={<ProtectedRoute element={<DashboardLayout><Products /></DashboardLayout>} />} />
             <Route path="/dashboard/menu" element={<ProtectedRoute element={<DashboardLayout><Menu /></DashboardLayout>} />} />
             <Route path="/dashboard/orders" element={<ProtectedRoute element={<DashboardLayout><Orders /></DashboardLayout>} />} />
+            <Route path="/dashboard/new-order" element={<ProtectedRoute element={<DashboardLayout><NewOrder /></DashboardLayout>} />} />
             <Route path="/dashboard/history" element={<ProtectedRoute element={<DashboardLayout><History /></DashboardLayout>} />} />
             
             <Route path="*" element={<NotFound />} />

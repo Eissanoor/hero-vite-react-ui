@@ -1,6 +1,6 @@
-
 import React, { useState } from 'react';
 import { Card, Button } from '../../components/HeroUI';
+import { useNavigate } from 'react-router-dom';
 
 const Orders = () => {
   // Sample order data
@@ -43,6 +43,8 @@ const Orders = () => {
   const [orders, setOrders] = useState(initialOrders);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   
+  const navigate = useNavigate();
+  
   const toggleOrderDetails = (orderId) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
@@ -66,8 +68,13 @@ const Orders = () => {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Active Orders</h1>
-      
+      <div className="mb-4 flex flex-row justify-between">
+      <h1 className="text-2xl font-bold">Active Orders</h1>
+        <Button onClick={() => navigate('/dashboard/new-order')} className="bg-hero-primary text-white hover:bg-hero-primary-dark">
+          New Order
+        </Button>
+      </div>
+
       <div className="space-y-6">
         {orders.map((order) => (
           <Card key={order.id} className="overflow-hidden">

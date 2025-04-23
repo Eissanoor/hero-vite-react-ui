@@ -1,6 +1,6 @@
 // API configuration
 const API_CONFIG = {
-  BASE_URL: 'http://localhost:5000',
+  BASE_URL: 'https://shahid-tan.vercel.app',
   ENDPOINTS: {
     LOGIN: '/api/users/login',
     ME: '/api/users/me',
