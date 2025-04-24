@@ -7,8 +7,8 @@ const Receipt = ({ orderData, items }) => {
     <div className="p-8 max-w-md mx-auto bg-white">
       <div className="text-center mb-6">
         <h1 className="text-xl font-bold">Restaurant Name</h1>
-        <p className="text-sm text-gray-600">123 Main Street</p>
-        <p className="text-sm text-gray-600">Phone: (123) 456-7890</p>
+        {/* <p className="text-sm text-gray-600">123 Main Street</p> */}
+        <p className="text-sm text-gray-600">Phone: (+92) 3329039903 OR (+92)32799800</p>
       </div>
 
       <div className="mb-4">

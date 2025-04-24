@@ -11,6 +11,15 @@ const Orders = () => {
   const [error, setError] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const handleItemsPerPageChange = (value) => {
+    setItemsPerPage(parseInt(value));
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
@@ -66,6 +75,14 @@ const Orders = () => {
   // Calculate total amount from all orders
   const totalAmount = historyData.reduce((sum, order) => sum + order.totalAmount, 0);
 
+  // Get current orders
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentOrders = historyData.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -118,7 +135,7 @@ const Orders = () => {
         </div>
       ) : (
         <div className="space-y-6">
-          {historyData.map((order) => (
+          {currentOrders.map((order) => (
             <Card key={order._id} className="overflow-hidden">
               <div className="flex flex-wrap items-center justify-between border-b bg-gray-50 dark:bg-gray-700 p-4 sm:flex-nowrap">
                 <div className="mb-2 flex items-center space-x-4 sm:mb-0">
@@ -204,6 +221,112 @@ const Orders = () => {
               </Card.Content>
             </Card>
           ))}
+          
+          {/* Pagination */}
+              <div className="flex items-center justify-between w-full  px-4">       
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, historyData.length)} of {historyData.length} orders
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span>Show</span>
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(e.target.value)}
+                    className="rounded border border-gray-300 bg-white px-2 py-1 text-sm focus:border-hero-primary focus:outline-none dark:border-gray-600 dark:bg-gray-800"
+                  >
+                    <option value="10">10</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                  <span>items per page</span>
+                </div>  
+              </div>
+          {historyData.length > itemsPerPage && (
+            <div className="mt-6 flex flex-col items-center space-y-3">
+              <div className="flex items-center space-x-4">
+                <Button
+                  onClick={() => paginate(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                  className="flex items-center space-x-1 px-3 py-2 text-sm disabled:opacity-50 border border-restaurant-primary text-restaurant-primary"
+                >
+                  <svg className="h-4 w-4 " viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Previous</span>
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  {currentPage > 2 && (
+                    <>
+                      <Button
+                        onClick={() => paginate(1)}
+                        variant="outline"
+                        className="h-8 w-8 p-0 text-sm"
+                      >
+                        1
+                      </Button>
+                      {currentPage > 3 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                    </>
+                  )}
+
+                  {[...Array(Math.ceil(historyData.length / itemsPerPage))].map((_, index) => {
+                    // Show current page and one page before and after
+                    if (
+                      index + 1 === currentPage ||
+                      index + 1 === currentPage - 1 ||
+                      index + 1 === currentPage + 1
+                    ) {
+                      return (
+                        <Button
+                          key={index + 1}
+                          onClick={() => paginate(index + 1)}
+                          variant={currentPage === index + 1 ? 'default' : 'outline'}
+                          className={`h-8 w-8 p-0 text-sm ${
+                            currentPage === index + 1
+                              ? 'bg-restaurant-primary text-white hover:bg-hero-primary-dark'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800 border border-restaurant-primary text-restaurant-primary'
+                          }`}
+                        >
+                          {index + 1}
+                        </Button>
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {currentPage < Math.ceil(historyData.length / itemsPerPage) - 1 && (
+                    <>
+                      {currentPage < Math.ceil(historyData.length / itemsPerPage) - 2 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                      <Button
+                        onClick={() => paginate(Math.ceil(historyData.length / itemsPerPage))}
+                        variant="outline"
+                        className="h-8 w-8 p-0 text-sm border border-restaurant-primary text-restaurant-primary"
+                      >
+                        {Math.ceil(historyData.length / itemsPerPage)}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => paginate(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(historyData.length / itemsPerPage)}
+                  variant="outline"
+                  className="flex items-center space-x-1 px-3 py-2 text-sm disabled:opacity-50 border border-restaurant-primary text-restaurant-primary"
+                >
+                  <span>Next</span>
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
