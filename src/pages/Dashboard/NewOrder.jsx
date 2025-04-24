@@ -285,7 +285,7 @@ const NewOrder = () => {
               <span className="text-sm text-gray-500">Searching...</span>
             )}
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-md text-gray-500 font-bold">
             {products.length} products found
           </div>
         </div>
@@ -409,7 +409,7 @@ const NewOrder = () => {
         <div className="space-y-4">
           {/* Cart items */}
           {loadingProducts ? (
-            [...Array(cartItems.length || 2)].map((_, index) => (
+            [...Array(cartItems.length || 0)].map((_, index) => (
               <CartItemSkeleton key={index} />
             ))
           ) : (
