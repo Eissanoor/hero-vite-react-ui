@@ -18,7 +18,7 @@ const NewOrder = () => {
   const [orderreceipt, setorderreceipt] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -121,11 +121,11 @@ const NewOrder = () => {
         <body>
           <div id="receipt">
             ${ReactDOMServer.renderToString(
-              <Receipt
-                orderData={orderResult}
-                items={cartItems}
-              />
-            )}
+      <Receipt
+        orderData={orderResult}
+        items={cartItems}
+      />
+    )}
           </div>
           <script>
             window.onload = function() {
@@ -170,11 +170,11 @@ const NewOrder = () => {
         body: JSON.stringify(orderData)
       });
       setorderreceipt(false);
-      
+
       if (response.ok) {
         const orderResult = await response.json();
         console.log('Order Response:', orderResult);
-        
+
         // Handle printing
         handlePrintReceipt(orderResult);
 
@@ -203,6 +203,46 @@ const NewOrder = () => {
   const closeImagePreview = () => {
     setSelectedImage(null);
   };
+
+  // Product Card Skeleton component
+  const ProductCardSkeleton = () => (
+    <Card className="flex flex-col overflow-hidden border border-gray-200 animate-pulse">
+      <div className="flex-1 p-4">
+        <div className="mb-5 flex h-32 w-full items-center justify-center">
+          <div className="h-40 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+        </div>
+        <div className="space-y-1">
+          <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-1/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-1/3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+      <div className="border-t p-3">
+        <div className="h-10 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
+    </Card>
+  );
+
+  // Cart Item Skeleton component
+  const CartItemSkeleton = () => (
+    <div className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm animate-pulse'>
+      <div className="flex justify-end">
+        <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      </div>
+      <div className="flex items-start space-x-4">
+        <div className="w-24 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+        <div className="flex flex-col space-y-4 flex-1">
+          <div className="h-5 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+      <div className="flex justify-between mt-2">
+        <div className="w-24 h-8 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+        <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="flex h-full">
@@ -252,7 +292,11 @@ const NewOrder = () => {
 
         {/* Grid of items */}
         {loadingProducts ? (
-          <div className="flex justify-center py-8"><Spinner size={32} /></div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
+            {[...Array(6)].map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
         ) : currentProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <svg
@@ -325,11 +369,10 @@ const NewOrder = () => {
                     <Button
                       key={index + 1}
                       onClick={() => paginate(index + 1)}
-                      className={`px-4 py-2 text-sm ${
-                        currentPage === index + 1
-                          ? 'bg-hero-primary text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
-                      }`}
+                      className={`px-4 py-2 text-sm ${currentPage === index + 1
+                        ? 'bg-hero-primary text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
                     >
                       {index + 1}
                     </Button>
@@ -352,57 +395,70 @@ const NewOrder = () => {
       <div className="w-full lg:w-[350px] border-l bg-white p-6 dark:bg-gray-800">
         <div className="flex justify-between items-center mb-4">
           <h2 className="mb-4 text-xl font-bold">Your Cart</h2>
-          <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full dark:bg-gray-700">
-            {cartItems.length} items
-          </span>
+          {
+            loadingProducts ? (
+              <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+
+            ) : (
+              <span className="text-sm bg-gray-100 px-2 py-0.5 rounded-full dark:bg-gray-700">
+                {cartItems.length} items
+              </span>
+            )
+          }
         </div>
         <div className="space-y-4">
           {/* Cart items */}
-          {cartItems.map((item) => (
-            <div className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm'>
-              <div className="flex justify-end">
-                <button
-                  className="text-lg font-bold text-gray-400 hover:text-gray-600  border-2 border-red-300 hover:border-red-600 rounded-lg px-2"
-                  onClick={() => removeFromCart(item._id)}
-                >
-                  X
-                </button>
-              </div>
-              <div key={item.id} className="flex items-start space-x-4">
-                <img
-                  src={item.pic || ""}
-                  alt={item.name}
-                  className="w-24 h-20 object-contain mb-1 border border-gray-200 rounded-lg"
-                />
-                <div className="flex flex-col">
-                  <h4 className="font-medium">{item.name}</h4>
-                  <p className="text-sm text-gray-500 mt-4">Type: {item.type}</p>
-                </div>
-              </div>
-              <div className="flex justify-between mt-2">
-                {/* <div className="flex-1"> */}
-                <div className="flex space-x-2 items-center bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200">
+          {loadingProducts ? (
+            [...Array(cartItems.length || 2)].map((_, index) => (
+              <CartItemSkeleton key={index} />
+            ))
+          ) : (
+            cartItems.map((item) => (
+              <div className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm'>
+                <div className="flex justify-end">
                   <button
-                    className="rounded px-2 text-gray-500 hover:bg-gray-100"
-                    onClick={() => updateQuantity(item._id, -1)}
+                    className="text-lg font-bold text-gray-400 hover:text-gray-600  border-2 border-red-300 hover:border-red-600 rounded-lg px-2"
+                    onClick={() => removeFromCart(item._id)}
                   >
-                    -
-                  </button>
-                  <span>{item.quantity}</span>
-                  <button
-                    className="rounded px-2 text-gray-500 hover:bg-gray-100"
-                    onClick={() => updateQuantity(item._id, 1)}
-                  >
-                    +
+                    X
                   </button>
                 </div>
-                {/* </div> */}
-                <div className="text-right">
-                  <div className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</div>
+                <div key={item.id} className="flex items-start space-x-4">
+                  <img
+                    src={item.pic || ""}
+                    alt={item.name}
+                    className="w-24 h-20 object-contain mb-1 border border-gray-200 rounded-lg"
+                  />
+                  <div className="flex flex-col">
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-sm text-gray-500 mt-4">Type: {item.type}</p>
+                  </div>
+                </div>
+                <div className="flex justify-between mt-2">
+                  {/* <div className="flex-1"> */}
+                  <div className="flex space-x-2 items-center bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200">
+                    <button
+                      className="rounded px-2 text-gray-500 hover:bg-gray-100"
+                      onClick={() => updateQuantity(item._id, -1)}
+                    >
+                      -
+                    </button>
+                    <span>{item.quantity}</span>
+                    <button
+                      className="rounded px-2 text-gray-500 hover:bg-gray-100"
+                      onClick={() => updateQuantity(item._id, 1)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {/* </div> */}
+                  <div className="text-right">
+                    <div className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
 
           {/* Cart summary */}
           {cartItems.length > 0 && (
@@ -416,8 +472,19 @@ const NewOrder = () => {
                 <span>SAR {calculateTotals().vat.toFixed(2)}</span>
               </div> */}
               <div className="mb-4 flex justify-between font-bold">
-                <span>Total:</span>
-                <span>Rs {calculateTotals().subtotal.toFixed(2)}</span>
+                {
+                  loadingProducts ? (
+                    <div className='flex flex-row justify-between w-full'>
+                      <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Total:</span>
+                      <span>Rs {calculateTotals().subtotal.toFixed(2)}</span>
+                    </>
+                  )
+                }
               </div>
               <Button className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark" onClick={handleCheckout}
                 isLoading={orderreceipt}
@@ -431,7 +498,7 @@ const NewOrder = () => {
 
       {/* Image Preview Modal */}
       {selectedImage && (
-        <div 
+        <div
           className="fixed inset-0 z-50 overflow-y-auto"
           aria-labelledby="modal-title"
           role="dialog"
@@ -441,8 +508,8 @@ const NewOrder = () => {
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            
-            <div 
+
+            <div
               className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
               onClick={e => e.stopPropagation()}
             >
@@ -458,7 +525,7 @@ const NewOrder = () => {
                   </svg>
                 </button>
               </div>
-              
+
               <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <div className="sm:flex sm:items-start">
                   <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
