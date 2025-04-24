@@ -242,6 +242,28 @@ const NewOrder = () => {
         {/* Grid of items */}
         {loadingProducts ? (
           <div className="flex justify-center py-8"><Spinner size={32} /></div>
+        ) : currentProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <svg
+              className="h-16 w-16 text-gray-400 mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M4 7h16M4 15h16M4 11h16"
+              />
+            </svg>
+            <p className="text-xl font-medium text-gray-600 dark:text-gray-400">No products found</p>
+            {searchQuery && (
+              <p className="text-sm text-gray-500 mt-2">
+                Try adjusting your search to find what you're looking for
+              </p>
+            )}
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
