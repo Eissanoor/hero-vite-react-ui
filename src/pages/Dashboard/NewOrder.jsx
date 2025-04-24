@@ -273,7 +273,7 @@ const NewOrder = () => {
                     {/* Barcode display area */}
                     <div className="mb-4 flex h-32 w-full items-center justify-center">
                       {/* <div className="h-16 w-48 "> */}
-                      <img src={item.pic} alt={item.name} className="object-contain mb-3" />
+                      <img src={item.pic} alt={item.name} className="object-cover mb-3 h-40 w-full" />
                       {/* </div> */}
                     </div>
 
