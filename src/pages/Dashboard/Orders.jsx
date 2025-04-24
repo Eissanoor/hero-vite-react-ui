@@ -152,10 +152,10 @@ const Orders = () => {
                     <tbody>
                       {order.products.map((item, idx) => (
                         <tr key={idx} className="border-b">
-                          <td className="py-2">{item.product.name}</td>
-                          <td className="py-2">{item.quantity}</td>
-                          <td className="py-2">Rs {item.product.price.toFixed(2)}</td>
-                          <td className="py-2">Rs {(item.quantity * item.product.price).toFixed(2)}</td>
+                          <td className="py-2">{item?.product?.name || ""}</td>
+                          <td className="py-2">{item?.quantity || 0}</td>
+                          <td className="py-2">Rs {item?.product?.price?.toFixed(2) || ""}</td>
+                          <td className="py-2">Rs {(item?.quantity * item?.product?.price || "").toFixed(2) || ""}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -163,7 +163,7 @@ const Orders = () => {
                       <tr>
                         <td colSpan="3" className="py-2 text-right font-medium">Total:</td>
                         <td className="py-2 font-bold">
-                          Rs {order.products.reduce((sum, item) => sum + (item.quantity * item.product.price), 0).toFixed(2)}
+                          Rs {order.products.reduce((sum, item) => sum + (item.quantity  * item?.product?.price || 0), 0).toFixed(2)}
                         </td>
                       </tr>
                     </tfoot>
