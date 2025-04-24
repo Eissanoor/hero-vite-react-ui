@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { Button } from '../HeroUI';
 import ThemeToggle from '../ThemeToggle';
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: 'grid' },
@@ -64,29 +65,37 @@ const DashboardLayout = ({ children }) => {
           </button>
         </div>
         <nav className="mt-5 px-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className="mb-2 flex items-center rounded-lg px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-restaurant-accent/10 dark:hover:bg-restaurant-primary/10"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+          {menuItems.map((item) => {
+            const isActive = location.pathname === item.path || 
+                           (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+            return (
+              <NavLink
+                key={item.name}
+                to={item.path}
+                className={`mb-2 flex items-center rounded-lg px-4 py-2 ${
+                  isActive 
+                    ? 'bg-restaurant-primary dark:bg-restaurant-primary text-white dark:text-white' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-restaurant-accent dark:hover:bg-restaurant-primary/10'
+                }`}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d={getIconPath(item.icon)}
-                />
-              </svg>
-              {sidebarOpen && <span className="ml-3">{item.name}</span>}
-            </Link>
-          ))}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={`h-5 w-5 ${isActive ? 'text-white dark:text-white' : ''}`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d={getIconPath(item.icon)}
+                  />
+                </svg>
+                {sidebarOpen && <span className="ml-3">{item.name}</span>}
+              </NavLink>
+            );
+          })}
         </nav>
         <div className="absolute bottom-0 border-t border-restaurant-accent/20 p-4">
           <div className="flex items-center justify-between mb-4">
@@ -136,7 +145,7 @@ const getIconPath = (icon) => {
     case 'list':
       return 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z';
     case 'package':
-      return 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4';
+      return 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4';
     case 'shopping-cart':
       return 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z';
     case 'history':

@@ -35,7 +35,7 @@ const Menu = () => {
     fetchMenus();
     // eslint-disable-next-line
   }, []);
-  
+
   const handleOpenModal = (item = null) => {
     setError('');
     setSuccess('');
@@ -123,25 +123,27 @@ const Menu = () => {
       </div>
 
       {/* Spinner overlay for main API loading (fetch, update, delete, add) */}
-      {loading && <Spinner overlay size={56} />}
-
       <div className={`grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 ${loading ? 'opacity-40 pointer-events-none' : ''}`}>
-        {menuItems.map((item) => (
-          <Card key={item._id || item.id} className="overflow-hidden hover:shadow-lg">
-            <img src={item.pic} alt={item.name} className="h-40 w-full object-cover" />
-            <Card.Content className="p-4">
-              <h3 className="text-lg font-bold">{item.name}</h3>
-              <div className="mt-4 flex space-x-2">
-                <Button variant="outline" size="sm" onClick={() => handleOpenModal(item)}>
-                  Edit
-                </Button>
-                <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item._id || item.id)}>
-                  Delete
-                </Button>
-              </div>
-            </Card.Content>
-          </Card>
-        ))}
+        {loading ? (
+          <div className="flex justify-center py-8"><Spinner overlay size={56} /></div>
+        ) : (
+          menuItems.map((item) => (
+            <Card key={item._id || item.id} className="overflow-hidden hover:shadow-lg">
+              <img src={item.pic} alt={item.name} className="h-40 w-full object-cover" />
+              <Card.Content className="p-4">
+                <h3 className="text-lg font-bold">{item.name}</h3>
+                <div className="mt-4 flex space-x-2">
+                  <Button variant="outline" size="sm" onClick={() => handleOpenModal(item)}>
+                    Edit
+                  </Button>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(item._id || item.id)}>
+                    Delete
+                  </Button>
+                </div>
+              </Card.Content>
+            </Card>
+          ))
+        )}
       </div>
 
       {/* Modal for Add/Edit Menu Item */}
@@ -153,7 +155,7 @@ const Menu = () => {
             <div className="border-b p-4">
               <h3 className="text-lg font-medium">{isEditing ? 'Edit Menu Item' : 'Add New Menu Item'}</h3>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="p-4">
               <div className="space-y-4">
                 <div>
@@ -167,7 +169,7 @@ const Menu = () => {
                     className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
-                
+
                 <div>
                   <label className="mb-1 block text-sm font-medium">Picture</label>
                   <input
@@ -190,7 +192,7 @@ const Menu = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="mt-6 flex justify-end space-x-3">
                 <Button variant="outline" type="button" onClick={handleCloseModal}>
                   Cancel
