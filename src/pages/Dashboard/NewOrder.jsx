@@ -17,6 +17,7 @@ const NewOrder = () => {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [orderreceipt, setorderreceipt] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -193,6 +194,16 @@ const NewOrder = () => {
     }
   };
 
+  // Function to handle image click
+  const handleImageClick = (imageUrl, name) => {
+    setSelectedImage({ url: imageUrl, name: name });
+  };
+
+  // Function to close image preview
+  const closeImagePreview = () => {
+    setSelectedImage(null);
+  };
+
   return (
     <div className="flex h-full">
       {/* Main content area */}
@@ -273,7 +284,7 @@ const NewOrder = () => {
                     {/* Barcode display area */}
                     <div className="mb-4 flex h-32 w-full items-center justify-center">
                       {/* <div className="h-16 w-48 "> */}
-                      <img src={item.pic} alt={item.name} className="object-cover mb-3 h-40 w-full" />
+                      <img src={item.pic} alt={item.name} className="object-cover mb-3 h-40 w-full cursor-pointer" onClick={() => handleImageClick(item.pic, item.name)} />
                       {/* </div> */}
                     </div>
 
@@ -417,6 +428,57 @@ const NewOrder = () => {
           )}
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-50 overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+          onClick={closeImagePreview}
+        >
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div 
+              className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="absolute top-0 right-0 pt-4 pr-4 z-10">
+                <button
+                  type="button"
+                  className="bg-white dark:bg-gray-800 rounded-md text-gray-400 hover:text-gray-500 focus:outline-none"
+                  onClick={closeImagePreview}
+                >
+                  <span className="sr-only">Close</span>
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4" id="modal-title">
+                      {selectedImage.name}
+                    </h3>
+                    <div className="relative w-full h-[60vh]">
+                      <img
+                        src={selectedImage.url}
+                        alt={selectedImage.name}
+                        className="absolute inset-0 w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
