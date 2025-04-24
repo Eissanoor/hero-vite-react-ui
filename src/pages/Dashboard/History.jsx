@@ -85,7 +85,7 @@ const History = () => {
                       <td className="p-4 font-medium text-hero-primary">#{item.orderid}</td>
                       <td className="p-4">{new Date(item.createdAt).toLocaleDateString()}</td>
                       <td className="p-4">{item.products.reduce((sum, p) => sum + p.quantity, 0)} items</td>
-                      <td className="p-4">${item.totalAmount}</td>
+                      <td className="p-4">{item.totalAmount}</td>
                       <td className="p-4">{item.status}</td>
                       <td className="p-4">
                         <button onClick={() => setSelectedOrder(item)} className="text-blue-500 hover:underline">Details</button>
@@ -121,14 +121,14 @@ const History = () => {
                   <tr key={p._id}>
                     <td className="p-2">{p.product.name}</td>
                     <td className="p-2">{p.product.type}</td>
-                    <td className="p-2 text-right">${p.product.price}</td>
+                    <td className="p-2 text-right">{p.product.price}</td>
                     <td className="p-2 text-right">{p.quantity}</td>
-                    <td className="p-2 text-right">${p.product.price * p.quantity}</td>
+                    <td className="p-2 text-right">{p.product.price * p.quantity}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="text-right font-semibold">Total: ${selectedOrder.totalAmount}</p>
+            <p className="text-right font-semibold">Total: {selectedOrder.totalAmount}</p>
           </div>
         </div>
       )}
