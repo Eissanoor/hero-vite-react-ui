@@ -88,10 +88,10 @@ const Orders = () => {
         <div className="space-y-6">
           {historyData.map((order) => (
             <Card key={order._id} className="overflow-hidden">
-              <div className="flex flex-wrap items-center justify-between border-b bg-gray-50 p-4 sm:flex-nowrap">
+              <div className="flex flex-wrap items-center justify-between border-b bg-gray-50 dark:bg-gray-700 p-4 sm:flex-nowrap">
                 <div className="mb-2 flex items-center space-x-4 sm:mb-0">
                   <span className="font-bold text-hero-primary">Order ID :{order.orderid}</span>
-                  <span className="text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</span>
+                  <span className="text-gray-500 dark:text-white">{new Date(order.createdAt).toLocaleDateString()}</span>
                   <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${getStatusBadgeClass(order.status)}`}>
                     {order.status}
                   </span>

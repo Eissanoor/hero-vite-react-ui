@@ -147,7 +147,7 @@ const Menu = () => {
       {/* Modal for Add/Edit Menu Item */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-lg relative">
+          <div className="w-full max-w-md rounded-lg bg-white dark:bg-gray-900 shadow-lg relative">
             {/* Spinner overlay for modal actions */}
             {loading && <Spinner overlay size={36} />}
             <div className="border-b p-4">

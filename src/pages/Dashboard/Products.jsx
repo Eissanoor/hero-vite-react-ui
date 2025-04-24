@@ -183,7 +183,7 @@ const Products = () => {
               </thead>
               <tbody>
                 {products.map((product) => (
-                  <tr key={product._id} className="border-b hover:bg-gray-50">
+                  <tr key={product._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="p-3">
                       <img src={product.pic} alt={product.name} className="h-12 w-12 rounded object-cover" />
                     </td>
@@ -213,7 +213,7 @@ const Products = () => {
       {/* Modal for Add/Edit Product */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-white shadow-lg">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-lg dark:bg-gray-900">
             <div className="border-b p-4">
               <h3 className="text-lg font-medium">{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
             </div>

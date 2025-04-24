@@ -70,7 +70,7 @@ const History = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b bg-gray-50 text-left">
+                  <tr className="border-b bg-gray-50 text-left dark:bg-gray-900">
                     <th className="p-4 font-medium">Order ID</th>
                     <th className="p-4 font-medium">Date</th>
                     <th className="p-4 font-medium">Items</th>
@@ -81,7 +81,7 @@ const History = () => {
                 </thead>
                 <tbody>
                   {historyData.map(item => (
-                    <tr key={item._id} className="border-b hover:bg-gray-50">
+                    <tr key={item._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="p-4 font-medium text-hero-primary">#{item.orderid}</td>
                       <td className="p-4">{new Date(item.createdAt).toLocaleDateString()}</td>
                       <td className="p-4">{item.products.reduce((sum, p) => sum + p.quantity, 0)} items</td>
@@ -100,7 +100,7 @@ const History = () => {
       )}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-lg w-full p-6 relative">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg max-w-lg w-full p-6 relative">
             <button onClick={() => setSelectedOrder(null)} className="absolute top-2 right-2 text-xl">×</button>
             <h2 className="text-xl font-bold mb-4">Order Details</h2>
             <p className="mb-2"><strong>Order ID:</strong> {selectedOrder.orderid}</p>
@@ -108,7 +108,7 @@ const History = () => {
             <p className="mb-4"><strong>Status:</strong> {selectedOrder.status}</p>
             <table className="w-full mb-4">
               <thead>
-                <tr className="border-b bg-gray-100">
+                <tr className="border-b bg-gray-100 dark:bg-gray-700 dark:border-gray-700">
                   <th className="p-2 text-left">Product</th>
                   <th className="p-2 text-left">Type</th>
                   <th className="p-2 text-right">Price</th>

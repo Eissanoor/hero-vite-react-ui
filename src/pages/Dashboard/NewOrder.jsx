@@ -16,17 +16,18 @@ const NewOrder = () => {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [orderreceipt, setorderreceipt] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
   // Function to fetch products from API
-  const fetchProducts = async () => {
+  const fetchProducts = async (search = '') => {
     setLoadingProducts(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/api/products`, {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/api/products?search=${encodeURIComponent(search)}`, {
         headers: { Authorization: token ? `Bearer ${token}` : undefined }
       });
       const result = await res.json();
@@ -39,6 +40,15 @@ const NewOrder = () => {
       setLoadingProducts(false);
     }
   };
+
+  // Handle search input change with debounce
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchProducts(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
 
   // Load products on mount
   useEffect(() => {
@@ -98,6 +108,46 @@ const NewOrder = () => {
     localStorage.setItem("cartItemss", JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // Function to handle printing receipt
+  const handlePrintReceipt = (orderResult) => {
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Order Receipt</title>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        </head>
+        <body>
+          <div id="receipt">
+            ${ReactDOMServer.renderToString(
+              <Receipt
+                orderData={orderResult}
+                items={cartItems}
+              />
+            )}
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              // Only close after printing on non-mobile devices
+              if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) {
+                window.close();
+              }
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+    } else {
+      alert('Please allow pop-ups to print the receipt');
+    }
+  };
 
   const handleCheckout = async () => {
     setorderreceipt(true);
@@ -119,43 +169,20 @@ const NewOrder = () => {
         body: JSON.stringify(orderData)
       });
       setorderreceipt(false);
+      
       if (response.ok) {
         const orderResult = await response.json();
         console.log('Order Response:', orderResult);
-        // Open receipt in new window
-        const receiptWindow = window.open('', '_blank');
-        receiptWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Order Receipt</title>
-              <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-            </head>
-            <body>
-              <div id="receipt">
-                ${ReactDOMServer.renderToString(
-          <Receipt
-            orderData={orderResult}
-            items={cartItems}
-          />
-        )}
-              </div>
-              <script>
-                window.onload = function() {
-                  window.print();
-                }
-              </script>
-            </body>
-          </html>
-        `);
-        receiptWindow.document.close();
+        
+        // Handle printing
+        handlePrintReceipt(orderResult);
 
-        // Clear the cart after successful order
+        // Clear cart
         setCartItems([]);
         localStorage.removeItem('cartItemss');
-        // alert('Order placed successfully!');
+
         // Navigate to orders page
-        navigate('/dashboard/orders');
+        // navigate('/dashboard/orders');
       } else {
         throw new Error(response.message || 'Failed to place order');
       }
@@ -171,12 +198,45 @@ const NewOrder = () => {
       {/* Main content area */}
       <div className="flex-1 overflow-auto p-6">
         {/* Search bar */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-64 rounded-lg border border-gray-300 px-4 py-2 focus:border-hero-primary focus:outline-none"
-          />
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search products..."
+                className="w-64 rounded-lg border border-gray-300 px-4 py-2 pl-10 focus:border-hero-primary focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {loadingProducts && (
+              <span className="text-sm text-gray-500">Searching...</span>
+            )}
+          </div>
+          <div className="text-sm text-gray-500">
+            {products.length} products found
+          </div>
         </div>
 
         {/* Grid of items */}
