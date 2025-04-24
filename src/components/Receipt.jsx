@@ -33,6 +33,7 @@ const Receipt = ({ orderData, items }) => {
             <tr className="text-left text-sm border-b">
               <th className="pb-2 font-bold">Item Name</th>
               <th className="pb-2 font-bold">Qty</th>
+              <th className="pb-2 font-bold">Type</th>
               <th className="pb-2 font-bold">Price</th>
               <th className="pb-2 text-right font-bold">Total</th>
             </tr>
@@ -42,6 +43,7 @@ const Receipt = ({ orderData, items }) => {
               <tr key={item._id} className="text-sm">
                 <td className="py-1">{item.name}</td>
                 <td className="py-1">{item.quantity}</td>
+                <td className="py-1">{item.type}</td>
                 <td className="py-1">Rs {item.price.toFixed(2)}</td>
                 <td className="py-1 text-right">Rs {(item.quantity * item.price).toFixed(2)}</td>
               </tr>
