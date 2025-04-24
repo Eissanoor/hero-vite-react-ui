@@ -1,4 +1,5 @@
 import React from 'react';
+import logoimage from "../Image/logo.jpeg"
 
 const Receipt = ({ orderData, items }) => {
   const receipt = orderData?.receipt || {};
@@ -6,9 +7,36 @@ const Receipt = ({ orderData, items }) => {
   return (
     <div className="p-8 max-w-md mx-auto bg-white">
       <div className="text-center mb-6">
-        <h1 className="text-xl font-bold">Restaurant Name</h1>
-        {/* <p className="text-sm text-gray-600">123 Main Street</p> */}
-        <p className="text-sm text-gray-600">Phone: (+92) 3329039903 OR (+92)32799800</p>
+        <div className="flex justify-center mb-4">
+          <div className="relative w-32 h-32 overflow-hidden rounded-full border-4 border-hero-primary shadow-lg">
+            <img
+              src={logoimage}
+              alt="Restaurant Logo"
+              className=" transform hover:scale-110 transition-transform duration-300"
+            />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <span className="text-3xl font-extrabold text-gray-800 ml-2">
+            ZS Cafe
+          </span>
+          <p className="text-sm text-gray-600 font-medium mt-4">
+            <span className="inline-flex items-center space-x-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span>(+92) 3329039903</span>
+            </span>
+          </p>
+          <p className="text-sm text-gray-600 font-medium">
+            <span className="inline-flex items-center space-x-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span>(+92) 3279799800</span>
+            </span>
+          </p>
+        </div>
       </div>
 
       <div className="mb-4">
