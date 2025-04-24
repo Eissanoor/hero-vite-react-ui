@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '../../components/HeroUI';
 import { useAuth } from '../../context/AuthContext';
 import API_CONFIG from '../../config/api';
+import Spinner from '../../components/ui/Spinner';
 
 const Dashboard = () => {
   const { user, loading, fetchUserProfile } = useAuth();
@@ -9,6 +10,9 @@ const Dashboard = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statsData, setStatsData] = useState({ totalProducts:0, menuItems:0, ordersToday:0, revenue:0 });
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(false);
+  const [errorRecent, setErrorRecent] = useState(null);
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -51,6 +55,27 @@ const Dashboard = () => {
       }
     };
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentOrders = async () => {
+      setLoadingRecent(true);
+      setErrorRecent(null);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_CONFIG.BASE_URL}/api/orders/history?period=day`, {
+          headers: { 'Content-Type':'application/json', Authorization: token ? `Bearer ${token}` : undefined }
+        });
+        const json = await res.json();
+        if (json.success) setRecentOrders(json.data.slice(0,3));
+        else setErrorRecent('Failed to load recent orders');
+      } catch (err) {
+        setErrorRecent(err.message);
+      } finally {
+        setLoadingRecent(false);
+      }
+    };
+    fetchRecentOrders();
   }, []);
 
   const statsArr = [
@@ -123,26 +148,28 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { id: '#1234', customer: 'John Doe', status: 'Completed', total: '$24.99' },
-                    { id: '#1235', customer: 'Jane Smith', status: 'Processing', total: '$76.50' },
-                    { id: '#1236', customer: 'Bob Johnson', status: 'Pending', total: '$53.25' },
-                  ].map((order) => (
-                    <tr key={order.id} className="border-b">
-                      <td className="py-3 pr-4">{order.id}</td>
-                      <td className="py-3 pr-4">{order.customer}</td>
-                      <td className="py-3 pr-4">
-                        <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
-                          order.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                          order.status === 'Processing' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-3">{order.total}</td>
-                    </tr>
-                  ))}
+                  {loadingRecent ? (
+                    <tr><td colSpan={4} className="p-4">Loading...</td></tr>
+                  ) : errorRecent ? (
+                    <tr><td colSpan={4} className="p-4 text-red-500">{errorRecent}</td></tr>
+                  ) : (
+                    recentOrders.map(order => (
+                      <tr key={order._id} className="border-b">
+                        <td className="py-3 pr-4">#{order.orderid}</td>
+                        <td className="py-3 pr-4">{order.products.reduce((sum,p)=>sum+p.quantity,0)} items</td>
+                        <td className="py-3 pr-4">
+                          <span className={`inline-block rounded-full px-2 py-1 text-xs font-medium ${
+                            order.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                            order.status === 'Processing' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="py-3">Rs {order.totalAmount}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
