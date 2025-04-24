@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api';
+import * as XLSX from 'xlsx';
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -10,6 +11,9 @@ const History = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Calculate total amount from all orders
+  const totalAmount = historyData.reduce((sum, order) => sum + order.totalAmount, 0);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -41,9 +45,78 @@ const History = () => {
     if (period !== 'range') fetchOrders();
   }, [period]);
 
+  // Function to download data as Excel
+  const downloadExcel = () => {
+    // Prepare data for Excel
+    const excelData = historyData.map(item => ({
+      'Order ID': item.orderid,
+      'Date': new Date(item.createdAt).toLocaleDateString(),
+      'Time': new Date(item.createdAt).toLocaleTimeString(),
+      'Items Count': item.products.reduce((sum, p) => sum + p.quantity, 0),
+      'Total Amount': `Rs ${item.totalAmount.toFixed(2)}`,
+      'Status': item.status,
+      'Products Details': item.products.map(p => 
+        `${p.product.name} (${p.quantity} x Rs ${p.product.price})`
+      ).join('\n')
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 10 },  // Order ID
+      { wch: 12 },  // Date
+      { wch: 10 },  // Time
+      { wch: 12 },  // Items Count
+      { wch: 15 },  // Total Amount
+      { wch: 10 },  // Status
+      { wch: 50 },  // Products Details
+    ];
+    ws['!cols'] = columnWidths;
+
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Orders');
+
+    // Add summary sheet
+    const summaryData = [{
+      'Total Orders': historyData.length,
+      'Total Amount': `Rs ${totalAmount.toFixed(2)}`,
+      'Period': period.charAt(0).toUpperCase() + period.slice(1),
+      'Generated On': new Date().toLocaleString()
+    }];
+    const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+
+    // Generate Excel file with date in local timezone
+    const date = new Date().toLocaleDateString().replace(/\//g, '-');
+    XLSX.writeFile(wb, `order_history_${period}_${date}.xlsx`);
+  };
+
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Order History</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Order History</h1>
+        <div className="flex items-center space-x-4">
+          <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+            {historyData.length} orders
+          </span>
+          <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
+            Total: Rs {totalAmount.toFixed(2)}
+          </span>
+          <button
+            onClick={downloadExcel}
+            disabled={loading || historyData.length === 0}
+            className="flex items-center space-x-2 bg-hero-primary text-white px-4 py-1 rounded-lg hover:bg-hero-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Export Excel</span>
+          </button>
+        </div>
+      </div>
       
       <div className="flex items-center mb-4 space-x-2">
         <label>Period:</label>

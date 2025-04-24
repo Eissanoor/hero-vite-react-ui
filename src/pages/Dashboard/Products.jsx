@@ -157,11 +157,32 @@ const Products = () => {
     }
   };
 
+  // Calculate total value of all products
+  const totalValue = products.reduce((sum, product) => sum + product.price, 0);
+
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Products</h1>
-        <Button onClick={() => handleOpenModal()}>Add New Product</Button>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">Products</h1>
+          <div className="flex items-center space-x-3">
+            <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+              {products.length} products
+            </span>
+            {/* <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
+              Total Value: Rs {totalValue.toFixed(2)}
+            </span> */}
+          </div>
+        </div>
+        <Button 
+          onClick={() => handleOpenModal()} 
+          className="bg-hero-primary text-white hover:bg-hero-primary-dark flex items-center space-x-2"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Add New Product</span>
+        </Button>
       </div>
       
       {loadingProducts ? (

@@ -63,13 +63,45 @@ const Orders = () => {
     }
   };
 
+  // Calculate total amount from all orders
+  const totalAmount = historyData.reduce((sum, order) => sum + order.totalAmount, 0);
+
   return (
     <div>
-      <div className="mb-4 flex flex-row justify-between">
-        <h1 className="text-2xl font-bold">Active Orders</h1>
-        <Button onClick={() => navigate('/dashboard/new-order')} className="bg-hero-primary text-white hover:bg-hero-primary-dark">
-          New Order
-        </Button>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold">Active Orders</h1>
+          <div className="flex items-center space-x-3">
+            <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
+              {historyData.length} orders
+            </span>
+            <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
+              Total: Rs {totalAmount.toFixed(2)}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={fetchOrders}
+            isLoading={loading}
+            className="flex items-center space-x-2"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>Refresh</span>
+          </Button>
+          <Button 
+            onClick={() => navigate('/dashboard/new-order')} 
+            className="bg-hero-primary text-white hover:bg-hero-primary-dark flex items-center space-x-2"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>New Order</span>
+          </Button>
+        </div>
       </div>
 
       {loading ? (
