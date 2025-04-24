@@ -164,6 +164,7 @@ const Menu = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter menu name"
+                    className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
                 

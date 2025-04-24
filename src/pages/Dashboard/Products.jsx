@@ -228,6 +228,7 @@ const Products = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter product name"
+                    className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
                 
@@ -239,6 +240,7 @@ const Products = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="Enter product description"
+                    className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
                 
@@ -252,6 +254,7 @@ const Products = () => {
                     onChange={handleInputChange}
                     required
                     placeholder="0.00"
+                    className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
                 
@@ -273,9 +276,9 @@ const Products = () => {
                 
                 <div>
                   <label className="mb-1 block text-sm font-medium">Menu</label>
-                  {loadingMenus ? (
+                  {/* {loadingMenus ? (
                     <Spinner size={20} />
-                  ) : (
+                  ) : ( */}
                     <select
                       name="megaMenu"
                       value={formData.megaMenu}
@@ -288,7 +291,7 @@ const Products = () => {
                         <option key={menu._id} value={menu._id}>{menu.name}</option>
                       ))}
                     </select>
-                  )}
+                  {/* // )} */}
                 </div>
                 <div>
                   <label className="mb-1 block text-sm font-medium">Picture</label>
