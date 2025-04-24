@@ -117,7 +117,7 @@ const Dashboard = () => {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="pb-3 pr-4 font-medium">Order ID</th>
-                    <th className="pb-3 pr-4 font-medium">Customer</th>
+                    <th className="pb-3 pr-4 font-medium">Items</th>
                     <th className="pb-3 pr-4 font-medium">Status</th>
                     <th className="pb-3 font-medium">Total</th>
                   </tr>
@@ -159,7 +159,7 @@ const Dashboard = () => {
                 <thead>
                   <tr className="border-b text-left">
                     <th className="pb-3 pr-4 font-medium">Product</th>
-                    <th className="pb-3 pr-4 font-medium">Category</th>
+                    <th className="pb-3 pr-4 font-medium">Menu</th>
                     <th className="pb-3 font-medium">Sales</th>
                   </tr>
                 </thead>
