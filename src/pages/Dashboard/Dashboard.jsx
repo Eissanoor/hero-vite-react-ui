@@ -13,6 +13,9 @@ const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [loadingRecent, setLoadingRecent] = useState(false);
   const [errorRecent, setErrorRecent] = useState(null);
+  const [popularProducts, setPopularProducts] = useState([]);
+  const [loadingPopular, setLoadingPopular] = useState(false);
+  const [errorPopular, setErrorPopular] = useState(null);
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -76,6 +79,27 @@ const Dashboard = () => {
       }
     };
     fetchRecentOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchPopularProducts = async () => {
+      setLoadingPopular(true);
+      setErrorPopular(null);
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_CONFIG.BASE_URL}/api/dashboard/popular-products`, {
+          headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : undefined }
+        });
+        const json = await res.json();
+        if (json.success) setPopularProducts(json.data);
+        else setErrorPopular('Failed to load popular products');
+      } catch (err) {
+        setErrorPopular(err.message);
+      } finally {
+        setLoadingPopular(false);
+      }
+    };
+    fetchPopularProducts();
   }, []);
 
   const statsArr = [
@@ -191,17 +215,19 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { name: 'Espresso', category: 'Coffee', sales: 145 },
-                    { name: 'Croissant', category: 'Bakery', sales: 98 },
-                    { name: 'Sandwich', category: 'Food', sales: 65 },
-                  ].map((product, i) => (
-                    <tr key={i} className="border-b">
-                      <td className="py-3 pr-4">{product.name}</td>
-                      <td className="py-3 pr-4">{product.category}</td>
-                      <td className="py-3">{product.sales}</td>
-                    </tr>
-                  ))}
+                  {loadingPopular ? (
+                    <tr><td colSpan={3} className="p-4">Loading...</td></tr>
+                  ) : errorPopular ? (
+                    <tr><td colSpan={3} className="p-4 text-red-500">{errorPopular}</td></tr>
+                  ) : (
+                    popularProducts.map((product, i) => (
+                      <tr key={i} className="border-b">
+                        <td className="py-3 pr-4">{product.name}</td>
+                        <td className="py-3 pr-4">{product.category}</td>
+                        <td className="py-3">{product.sales}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

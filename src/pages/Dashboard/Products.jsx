@@ -15,6 +15,7 @@ const Products = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
+  const [viewMode, setViewMode] = useState('table');
 
   // Function to fetch products from API
   const fetchProducts = async () => {
@@ -174,20 +175,29 @@ const Products = () => {
             </span> */}
           </div>
         </div>
-        <Button 
-          onClick={() => handleOpenModal()} 
-          className="bg-hero-primary text-white hover:bg-hero-primary-dark flex items-center space-x-2"
-        >
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span>Add New Product</span>
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button variant={viewMode === 'table' ? 'solid' : 'outline'} size="sm" onClick={() => setViewMode('table')}> 
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </Button>
+          <Button variant={viewMode === 'grid' ? 'solid' : 'outline'} size="sm" onClick={() => setViewMode('grid')}> 
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
+            </svg>
+          </Button>
+          <Button onClick={() => handleOpenModal()} className="bg-hero-primary text-white hover:bg-hero-primary-dark flex items-center space-x-2">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add New Product</span>
+          </Button>
+        </div>
       </div>
       
       {loadingProducts ? (
         <div className="flex justify-center py-8"><Spinner size={32} /></div>
-      ) : (
+      ) : viewMode === 'table' ? (
       <Card>
         <Card.Content>
           <div className="overflow-x-auto">
@@ -229,6 +239,23 @@ const Products = () => {
           </div>
         </Card.Content>
       </Card>
+      ) : (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {products.map(product => (
+          <div key={product._id} className="border rounded p-4 flex flex-col items-center">
+            <img src={product.pic} alt={product.name} className="h-40 w-full object-cover mb-2" />
+            <span className="font-medium text-lg mb-2">{product.name}</span>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" onClick={() => handleOpenModal(product)}>
+                Edit
+              </Button>
+              <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product._id)} disabled={deletingId === product._id}>
+                {deletingId === product._id ? <Spinner size={16} /> : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
       )}
       
       {/* Modal for Add/Edit Product */}
@@ -292,6 +319,7 @@ const Products = () => {
                     <option value="small">Small</option>
                     <option value="medium">Medium</option>
                     <option value="large">Large</option>
+                    <option value="deal">Deal</option>
                   </select>
                 </div>
                 
