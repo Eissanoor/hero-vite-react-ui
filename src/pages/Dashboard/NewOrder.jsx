@@ -19,10 +19,6 @@ const NewOrder = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
-
   // Function to fetch products from API
   const fetchProducts = async (search = '') => {
     setLoadingProducts(true);
@@ -55,14 +51,6 @@ const NewOrder = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-
-  // Get current products
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const addToCart = (item) => {
     setCartItems(prevItems => {
@@ -297,7 +285,7 @@ const NewOrder = () => {
               <ProductCardSkeleton key={index} />
             ))}
           </div>
-        ) : currentProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <svg
               className="h-16 w-16 text-gray-400 mb-4"
@@ -322,7 +310,7 @@ const NewOrder = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
-              {currentProducts.map((item) => (
+              {products.map((item) => (
                 <Card key={item.id} className="flex flex-col overflow-hidden border border-gray-200">
                   <div className="flex-1 p-4">
                     {/* Barcode display area */}
@@ -353,40 +341,6 @@ const NewOrder = () => {
                 </Card>
               ))}
             </div>
-
-            {/* Pagination */}
-            {products.length > itemsPerPage && (
-              <div className="mt-6 flex justify-center">
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm"
-                  >
-                    Previous
-                  </Button>
-                  {[...Array(Math.ceil(products.length / itemsPerPage))].map((_, index) => (
-                    <Button
-                      key={index + 1}
-                      onClick={() => paginate(index + 1)}
-                      className={`px-4 py-2 text-sm ${currentPage === index + 1
-                        ? 'bg-hero-primary text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                    >
-                      {index + 1}
-                    </Button>
-                  ))}
-                  <Button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
-                    className="px-4 py-2 text-sm"
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
