@@ -7,6 +7,45 @@ import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
 
 const NewOrder = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
+  // Listen for online/offline events
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // Sync pending orders when back online
+  useEffect(() => {
+    if (isOnline) {
+      const pending = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
+      if (pending.length > 0) {
+        setSyncing(true);
+        Promise.all(pending.map(async (orderData) => {
+          const token = localStorage.getItem('token');
+          try {
+            await fetch(`${API_CONFIG.BASE_URL}/api/orders`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: token ? `Bearer ${token}` : undefined
+              },
+              body: JSON.stringify(orderData)
+            });
+          } catch (e) { /* Optionally, handle/report errors here */ }
+        })).then(() => {
+          localStorage.removeItem('pendingOrders');
+          setSyncing(false);
+        });
+      }
+    }
+  }, [isOnline]);
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cartItemss");
@@ -140,14 +179,32 @@ const NewOrder = () => {
 
   const handleCheckout = async () => {
     setorderreceipt(true);
-    try {
-      const orderData = {
-        products: cartItems.map((item) => ({
-          product: item._id,
-          quantity: item.quantity,
-        }))
+    const orderData = {
+      products: cartItems.map((item) => ({
+        product: item._id,
+        quantity: item.quantity,
+      }))
+    };
+    if (!isOnline) {
+      // Save to pending orders in localStorage
+      const pending = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
+      localStorage.setItem('pendingOrders', JSON.stringify([...pending, orderData]));
+      setorderreceipt(false);
+      // Print a temporary receipt with a placeholder orderResult
+      const offlineOrderResult = {
+        orderid: `OFFLINE-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        status: 'Pending (Offline)',
+        totalAmount: calculateTotals().subtotal,
+        products: orderData.products
       };
-
+      handlePrintReceipt(offlineOrderResult);
+      setCartItems([]);
+      localStorage.removeItem('cartItemss');
+      alert('Order saved offline and will be sent automatically when you are back online.');
+      return;
+    }
+    try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/orders`, {
         method: 'POST',
@@ -232,8 +289,16 @@ const NewOrder = () => {
     </div>
   );
 
+  // Offline/Sync Banner
   return (
-    <div className="flex h-full">
+    <>
+      {!isOnline && (
+        <div className="bg-red-500 text-white text-center py-2 mb-2">Offline Mode: Orders will be saved and synced when online.</div>
+      )}
+      {syncing && (
+        <div className="bg-yellow-400 text-black text-center py-2 mb-2">Syncing pending orders...</div>
+      )}
+      <div className="flex h-full">
       {/* Main content area */}
       <div className="flex-1 overflow-auto p-6">
         {/* Search bar */}
@@ -501,6 +566,7 @@ const NewOrder = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

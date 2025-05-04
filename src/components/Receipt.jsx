@@ -3,6 +3,14 @@ import logoimage from "../Image/logo.jpeg"
 
 const Receipt = ({ orderData, items }) => {
   const receipt = orderData?.receipt || {};
+  // Fallbacks for online/offline
+  const orderid = orderData.orderid || receipt.orderid || "Not Available";
+  const receiptNumber = receipt.receiptNumber || "N/A";
+  const date = receipt.date || orderData.createdAt || new Date().toISOString();
+  const status = orderData.status || receipt.orderStatus || "N/A";
+  const reference = receipt.orderReference || "N/A";
+  const itemList = items || orderData.products || [];
+  const total = typeof orderData.totalAmount === 'number' ? orderData.totalAmount : (typeof receipt.total === 'number' ? receipt.total : 0);
 
   return (
     <div className="p-8 max-w-md mx-auto bg-white">
@@ -67,21 +75,25 @@ const Receipt = ({ orderData, items }) => {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item._id} className="text-sm">
-                <td className="py-1">{item.name}</td>
-                <td className="py-1">{item.quantity}</td>
-                <td className="py-1">{item.type}</td>
-                <td className="py-1">Rs {item.price.toFixed(2)}</td>
-                <td className="py-1 text-right">Rs {(item.quantity * item.price).toFixed(2)}</td>
-              </tr>
-            ))}
+            {itemList.map((item) => {
+  const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+  const qty = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+  return (
+    <tr key={item._id || item.product} className="text-sm">
+      <td className="py-1">{item.name || item.product || ''}</td>
+      <td className="py-1">{qty}</td>
+      <td className="py-1">{item.type || ''}</td>
+      <td className="py-1">Rs {price.toFixed(2)}</td>
+      <td className="py-1 text-right">Rs {(qty * price).toFixed(2)}</td>
+    </tr>
+  );
+})} 
           </tbody>
         </table>
       </div>
       <div className="flex justify-between font-bold mb-6">
         <span>Total</span>
-        <span>Rs {receipt.total.toFixed(2)}</span>
+        <span>Rs {typeof total === 'number' ? total.toFixed(2) : '0.00'}</span>
       </div>
 
       <div className="text-center text-xs text-gray-500 mt-6">
