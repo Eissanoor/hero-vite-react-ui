@@ -7,6 +7,45 @@ import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
 
 const NewOrder = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [syncing, setSyncing] = useState(false);
+  // Listen for online/offline events
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  // Sync pending orders when back online
+  useEffect(() => {
+    if (isOnline) {
+      const pending = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
+      if (pending.length > 0) {
+        setSyncing(true);
+        Promise.all(pending.map(async (orderData) => {
+          const token = localStorage.getItem('token');
+          try {
+            await fetch(`${API_CONFIG.BASE_URL}/api/orders`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: token ? `Bearer ${token}` : undefined
+              },
+              body: JSON.stringify(orderData)
+            });
+          } catch (e) { /* Optionally, handle/report errors here */ }
+        })).then(() => {
+          localStorage.removeItem('pendingOrders');
+          setSyncing(false);
+        });
+      }
+    }
+  }, [isOnline]);
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cartItemss");
@@ -18,10 +57,6 @@ const NewOrder = () => {
   const [orderreceipt, setorderreceipt] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
 
   // Function to fetch products from API
   const fetchProducts = async (search = '') => {
@@ -55,14 +90,6 @@ const NewOrder = () => {
   useEffect(() => {
     fetchProducts();
   }, []);
-
-  // Get current products
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Change page
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const addToCart = (item) => {
     setCartItems(prevItems => {
@@ -152,14 +179,32 @@ const NewOrder = () => {
 
   const handleCheckout = async () => {
     setorderreceipt(true);
-    try {
-      const orderData = {
-        products: cartItems.map((item) => ({
-          product: item._id,
-          quantity: item.quantity,
-        }))
+    const orderData = {
+      products: cartItems.map((item) => ({
+        product: item._id,
+        quantity: item.quantity,
+      }))
+    };
+    if (!isOnline) {
+      // Save to pending orders in localStorage
+      const pending = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
+      localStorage.setItem('pendingOrders', JSON.stringify([...pending, orderData]));
+      setorderreceipt(false);
+      // Print a temporary receipt with a placeholder orderResult
+      const offlineOrderResult = {
+        orderid: `OFFLINE-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        status: 'Pending (Offline)',
+        totalAmount: calculateTotals().subtotal,
+        products: orderData.products
       };
-
+      handlePrintReceipt(offlineOrderResult);
+      setCartItems([]);
+      localStorage.removeItem('cartItemss');
+      alert('Order saved offline and will be sent automatically when you are back online.');
+      return;
+    }
+    try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${API_CONFIG.BASE_URL}/api/orders`, {
         method: 'POST',
@@ -244,8 +289,16 @@ const NewOrder = () => {
     </div>
   );
 
+  // Offline/Sync Banner
   return (
-    <div className="flex h-full">
+    <>
+      {!isOnline && (
+        <div className="bg-red-500 text-white text-center py-2 mb-2">Offline Mode: Orders will be saved and synced when online.</div>
+      )}
+      {syncing && (
+        <div className="bg-yellow-400 text-black text-center py-2 mb-2">Syncing pending orders...</div>
+      )}
+      <div className="flex h-full">
       {/* Main content area */}
       <div className="flex-1 overflow-auto p-6">
         {/* Search bar */}
@@ -297,7 +350,7 @@ const NewOrder = () => {
               <ProductCardSkeleton key={index} />
             ))}
           </div>
-        ) : currentProducts.length === 0 ? (
+        ) : products.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <svg
               className="h-16 w-16 text-gray-400 mb-4"
@@ -322,7 +375,7 @@ const NewOrder = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
-              {currentProducts.map((item) => (
+              {products.map((item) => (
                 <Card key={item.id} className="flex flex-col overflow-hidden border border-gray-200">
                   <div className="flex-1 p-4">
                     {/* Barcode display area */}
@@ -353,40 +406,6 @@ const NewOrder = () => {
                 </Card>
               ))}
             </div>
-
-            {/* Pagination */}
-            {products.length > itemsPerPage && (
-              <div className="mt-6 flex justify-center">
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 text-sm"
-                  >
-                    Previous
-                  </Button>
-                  {[...Array(Math.ceil(products.length / itemsPerPage))].map((_, index) => (
-                    <Button
-                      key={index + 1}
-                      onClick={() => paginate(index + 1)}
-                      className={`px-4 py-2 text-sm ${currentPage === index + 1
-                        ? 'bg-hero-primary text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                    >
-                      {index + 1}
-                    </Button>
-                  ))}
-                  <Button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === Math.ceil(products.length / itemsPerPage)}
-                    className="px-4 py-2 text-sm"
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -547,6 +566,7 @@ const NewOrder = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

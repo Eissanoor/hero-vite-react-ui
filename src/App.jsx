@@ -13,6 +13,7 @@ import Orders from "./pages/Dashboard/Orders";
 import NewOrder from "./pages/Dashboard/NewOrder";
 import History from "./pages/Dashboard/History";
 import NotFound from "./pages/NotFound";
+import React, { useState, useEffect } from 'react';
 
 const queryClient = new QueryClient();
 
@@ -24,28 +25,48 @@ const ProtectedRoute = ({ element }) => {
   return element;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
-            
-            <Route path="/dashboard" element={<ProtectedRoute element={<DashboardLayout><Dashboard /></DashboardLayout>} />} />
-            <Route path="/dashboard/products" element={<ProtectedRoute element={<DashboardLayout><Products /></DashboardLayout>} />} />
-            <Route path="/dashboard/menu" element={<ProtectedRoute element={<DashboardLayout><Menu /></DashboardLayout>} />} />
-            <Route path="/dashboard/orders" element={<ProtectedRoute element={<DashboardLayout><Orders /></DashboardLayout>} />} />
-            <Route path="/dashboard/new-order" element={<ProtectedRoute element={<DashboardLayout><NewOrder /></DashboardLayout>} />} />
-            <Route path="/dashboard/history" element={<ProtectedRoute element={<DashboardLayout><History /></DashboardLayout>} />} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  return (
+    <>
+      {!isOnline && (
+        <div className="bg-red-500 text-white text-center py-2">
+          Offline Mode: You appear offline
+        </div>
+      )}
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <BrowserRouter>
+            <AuthProvider>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/login" element={<Login />} />
+                
+                <Route path="/dashboard" element={<ProtectedRoute element={<DashboardLayout><Dashboard /></DashboardLayout>} />} />
+                <Route path="/dashboard/products" element={<ProtectedRoute element={<DashboardLayout><Products /></DashboardLayout>} />} />
+                <Route path="/dashboard/menu" element={<ProtectedRoute element={<DashboardLayout><Menu /></DashboardLayout>} />} />
+                <Route path="/dashboard/orders" element={<ProtectedRoute element={<DashboardLayout><Orders /></DashboardLayout>} />} />
+                <Route path="/dashboard/new-order" element={<ProtectedRoute element={<DashboardLayout><NewOrder /></DashboardLayout>} />} />
+                <Route path="/dashboard/history" element={<ProtectedRoute element={<DashboardLayout><History /></DashboardLayout>} />} />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </>
+  );
+};
 
 export default App;
