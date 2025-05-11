@@ -411,7 +411,7 @@ const NewOrder = () => {
       </div>
 
       {/* Cart sidebar */}
-      <div className="w-full lg:w-[350px] border-l bg-white p-6 dark:bg-gray-800">
+      <div className="w-full lg:w-[350px] border-l bg-white p-6 dark:bg-gray-800 overflow-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="mb-4 text-xl font-bold">Your Cart</h2>
           {
