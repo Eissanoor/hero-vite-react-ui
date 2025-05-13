@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
 import { getMegaMenus } from '../../api/megamenu';
+import { useQuery } from '@tanstack/react-query';
 
 const NewOrder = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -73,52 +74,46 @@ const NewOrder = () => {
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
   const [orderreceipt, setorderreceipt] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeMenu, setActiveMenu] = useState('all');
 
   // Function to fetch products from API
-  const fetchProducts = async (search = '', menuId = null) => {
-    setLoadingProducts(true);
+  const fetchProducts = async () => {
     const token = localStorage.getItem('token');
-    try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/api/products?search=${encodeURIComponent(search)}`, {
-        headers: { Authorization: token ? `Bearer ${token}` : undefined }
-      });
-      const result = await res.json();
-
-      if (result.success) {
-        // Filter products based on selected menu
-        const filteredProducts = menuId === 'all' || !menuId
-          ? result.data
-          : result.data.filter(product => product.megaMenu?._id === menuId);
-        setProducts(filteredProducts);
-      } else {
-        console.error('Failed to fetch products:', result);
-      }
-    } catch (err) {
-      console.error('Error fetching products:', err);
-    } finally {
-      setLoadingProducts(false);
+    const res = await fetch(`${API_CONFIG.BASE_URL}/api/products?search=${encodeURIComponent(searchQuery)}`, {
+      headers: { Authorization: token ? `Bearer ${token}` : undefined }
+    });
+    const result = await res.json();
+    if (!result.success) {
+      throw new Error('Failed to fetch products');
     }
+    return result.data;
   };
+
+  // Use React Query for products
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ['products', searchQuery],
+    queryFn: fetchProducts,
+    select: (data) => {
+      // Filter products based on selected menu
+      return activeMenu === 'all'
+        ? data
+        : data.filter(product => product.megaMenu?._id === activeMenu);
+    },
+    // staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    refetchOnWindowFocus: false,
+  });
 
   // Handle search input change with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchProducts(searchQuery, activeMenu);
+      // The query will automatically refetch when searchQuery changes
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery, activeMenu]);
-
-  // Load products on mount
-  useEffect(() => {
-    fetchProducts('', 'all');
-  }, []);
+  }, [searchQuery]);
 
   const addToCart = (item) => {
     setCartItems(prevItems => {
@@ -374,7 +369,7 @@ const NewOrder = () => {
 
         <div className='mb-6 overflow-x-auto'>
         {
-        loadingProducts ? (
+        loading ? (
           <div className="flex flex-row ">
             {[...Array(6)].map((_, index) => (
                 <div className="h-10 mx-2 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
@@ -383,10 +378,7 @@ const NewOrder = () => {
         ) : (
           <div className='flex flex-nowrap space-x-2 min-w-max'>
             <button 
-              onClick={() => {
-                setActiveMenu('all');
-                fetchProducts(searchQuery, 'all');
-              }}
+              onClick={() => setActiveMenu('all')}
               className={`border-4 px-4 py-1 text-md font-mono rounded-lg whitespace-nowrap mb-3 ${activeMenu === 'all' ? 'bg-restaurant-primary/20 border-restaurant-primary/40' : 'dark:border-restaurant-primary/20 dark:hover:border-restaurant-primary/30'}`}
             >
               All
@@ -395,10 +387,7 @@ const NewOrder = () => {
               menuItems.map((item) => (
                 <button 
                   key={item._id}
-                  onClick={() => {
-                    setActiveMenu(item._id);
-                    fetchProducts(searchQuery, item._id);
-                  }}
+                  onClick={() => setActiveMenu(item._id)}
                   className={`border-4 px-4 py-1 text-md font-mono rounded-lg whitespace-nowrap mb-3 ${activeMenu === item._id ? 'bg-restaurant-primary/20 border-restaurant-primary/40' : 'dark:border-restaurant-primary/20 dark:hover:border-restaurant-primary/30'}`}
                 >
                   {item?.name || ""}
