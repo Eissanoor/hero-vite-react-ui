@@ -165,10 +165,10 @@ const Products = () => {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold">Products</h1>
+          <h1 className="text-2xl font-bold">Items</h1>
           <div className="flex items-center space-x-3">
             <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-              {products.length} products
+              {products.length} items
             </span>
             {/* <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
               Total Value: Rs {totalValue.toFixed(2)}
@@ -190,7 +190,7 @@ const Products = () => {
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span>Add New Product</span>
+            <span>Add New Item</span>
           </Button>
         </div>
       </div>
@@ -263,19 +263,19 @@ const Products = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="w-full max-w-md rounded-lg bg-white shadow-lg dark:bg-gray-900">
             <div className="border-b p-4">
-              <h3 className="text-lg font-medium">{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
+              <h3 className="text-lg font-medium">{isEditing ? 'Edit Item' : 'Add New Item'}</h3>
             </div>
             
             <form onSubmit={handleSubmit} className="p-4">
               <div className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Product Name</label>
+                  <label className="mb-1 block text-sm font-medium">Item Name</label>
                   <Input
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter product name"
+                    placeholder="Enter item name"
                     className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
@@ -287,7 +287,7 @@ const Products = () => {
                     value={formData.description}
                     onChange={handleInputChange}
                     required
-                    placeholder="Enter product description"
+                    placeholder="Enter item description"
                     className="bg-white/50 dark:bg-gray-800/50 dark:text-gray-200 dark:placeholder:text-gray-400 dark:placeholder:opacity-100"
                   />
                 </div>
@@ -324,7 +324,7 @@ const Products = () => {
                 </div>
                 
                 <div>
-                  <label className="mb-1 block text-sm font-medium">Menu</label>
+                  <label className="mb-1 block text-sm font-medium">Menu Collection</label>
                   {/* {loadingMenus ? (
                     <Spinner size={20} />
                   ) : ( */}
@@ -335,7 +335,7 @@ const Products = () => {
                       required
                       className="w-full rounded border px-3 py-2"
                     >
-                      <option value="">Select menu</option>
+                      <option value="">Select menu collection</option>
                       {menus.map(menu => (
                         <option key={menu._id} value={menu._id}>{menu.name}</option>
                       ))}
@@ -365,7 +365,7 @@ const Products = () => {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting}>
-                  {submitting ? <Spinner size={16} /> : isEditing ? 'Update' : 'Add'} Product
+                  {submitting ? <Spinner size={16} /> : isEditing ? 'Update' : 'Add'} Item
                 </Button>
               </div>
             </form>

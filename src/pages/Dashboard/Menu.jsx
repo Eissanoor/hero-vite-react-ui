@@ -118,8 +118,8 @@ const Menu = () => {
   return (
     <div className="relative">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Menu Items</h1>
-        <Button onClick={() => handleOpenModal()}>Add New Menu Item</Button>
+        <h1 className="text-2xl font-bold">Menu Collections</h1>
+        <Button onClick={() => handleOpenModal()}>Add New Menu Collection</Button>
       </div>
 
       {/* Spinner overlay for main API loading (fetch, update, delete, add) */}
@@ -153,7 +153,7 @@ const Menu = () => {
             {/* Spinner overlay for modal actions */}
             {loading && <Spinner overlay size={36} />}
             <div className="border-b p-4">
-              <h3 className="text-lg font-medium">{isEditing ? 'Edit Menu Item' : 'Add New Menu Item'}</h3>
+              <h3 className="text-lg font-medium">{isEditing ? 'Edit Menu Collection' : 'Add New Menu Collection'}</h3>
             </div>
 
             <form onSubmit={handleSubmit} className="p-4">
@@ -198,7 +198,7 @@ const Menu = () => {
                   Cancel
                 </Button>
                 <Button type="submit">
-                  {isEditing ? 'Update' : 'Add'} Menu Item
+                  {isEditing ? 'Update' : 'Add'} Menu Collection
                 </Button>
               </div>
             </form>

@@ -192,7 +192,7 @@ const Orders = () => {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b text-left">
-                        <th className="pb-2 font-medium">Product</th>
+                        <th className="pb-2 font-medium">Item</th>
                         <th className="pb-2 font-medium">Quantity</th>
                         <th className="pb-2 font-medium">Price</th>
                         <th className="pb-2 font-medium">Subtotal</th>

@@ -55,7 +55,7 @@ const History = () => {
       'Items Count': item.products.reduce((sum, p) => sum + p.quantity, 0),
       'Total Amount': `Rs ${item.totalAmount.toFixed(2)}`,
       'Status': item.status,
-      'Products Details': item.products.map(p => 
+      'Items Details': item.products.map(p => 
         `${p.product.name} (${p.quantity} x Rs ${p.product.price})`
       ).join('\n')
     }));
@@ -71,7 +71,7 @@ const History = () => {
       { wch: 12 },  // Items Count
       { wch: 15 },  // Total Amount
       { wch: 10 },  // Status
-      { wch: 50 },  // Products Details
+      { wch: 50 },  // Items Details
     ];
     ws['!cols'] = columnWidths;
 
@@ -182,7 +182,7 @@ const History = () => {
             <table className="w-full mb-4">
               <thead>
                 <tr className="border-b bg-gray-100 dark:bg-gray-700 dark:border-gray-700">
-                  <th className="p-2 text-left">Product</th>
+                  <th className="p-2 text-left">Items</th>
                   <th className="p-2 text-left">Type</th>
                   <th className="p-2 text-right">Price</th>
                   <th className="p-2 text-right">Quantity</th>
