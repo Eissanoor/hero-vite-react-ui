@@ -5,10 +5,13 @@ import Spinner from '../../components/ui/Spinner';
 import { useNavigate } from 'react-router-dom';
 import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
+import { getMegaMenus } from '../../api/megamenu';
 
 const NewOrder = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [syncing, setSyncing] = useState(false);
+  const [syncing, setSyncing] = useState(false); 
+   const [menuItems, setMenuItems] = useState([]);
+     const [loading, setLoading] = useState(false);
   // Listen for online/offline events
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -20,6 +23,24 @@ const NewOrder = () => {
       window.removeEventListener('offline', goOffline);
     };
   }, []);
+
+  const token = localStorage.getItem('token');
+
+    useEffect(() => {
+      const fetchMenus = async () => {
+        try {
+          setLoading(true);
+          const resp = await getMegaMenus(token);
+          setMenuItems(resp.data || []);
+        } catch (err) {
+          // setError(err.message || 'Failed to fetch menu items');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchMenus();
+      // eslint-disable-next-line
+    }, []);
 
   // Sync pending orders when back online
   useEffect(() => {
@@ -57,9 +78,10 @@ const NewOrder = () => {
   const [orderreceipt, setorderreceipt] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [activeMenu, setActiveMenu] = useState('all');
 
   // Function to fetch products from API
-  const fetchProducts = async (search = '') => {
+  const fetchProducts = async (search = '', menuId = null) => {
     setLoadingProducts(true);
     const token = localStorage.getItem('token');
     try {
@@ -68,8 +90,15 @@ const NewOrder = () => {
       });
       const result = await res.json();
 
-      if (result.success) setProducts(result.data);
-      else console.error('Failed to fetch products:', result);
+      if (result.success) {
+        // Filter products based on selected menu
+        const filteredProducts = menuId === 'all' || !menuId
+          ? result.data
+          : result.data.filter(product => product.megaMenu?._id === menuId);
+        setProducts(filteredProducts);
+      } else {
+        console.error('Failed to fetch products:', result);
+      }
     } catch (err) {
       console.error('Error fetching products:', err);
     } finally {
@@ -80,15 +109,15 @@ const NewOrder = () => {
   // Handle search input change with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchProducts(searchQuery);
+      fetchProducts(searchQuery, activeMenu);
     }, 300); // 300ms debounce
 
     return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+  }, [searchQuery, activeMenu]);
 
   // Load products on mount
   useEffect(() => {
-    fetchProducts();
+    fetchProducts('', 'all');
   }, []);
 
   const addToCart = (item) => {
@@ -341,6 +370,45 @@ const NewOrder = () => {
           <div className="text-md text-gray-500 font-bold">
             {products.length} products found
           </div>
+        </div>
+
+        <div className='mb-6 overflow-x-auto'>
+        {
+        loadingProducts ? (
+          <div className="flex flex-row ">
+            {[...Array(6)].map((_, index) => (
+                <div className="h-10 mx-2 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            ))}
+          </div>
+        ) : (
+          <div className='flex flex-nowrap space-x-2 min-w-max'>
+            <button 
+              onClick={() => {
+                setActiveMenu('all');
+                fetchProducts(searchQuery, 'all');
+              }}
+              className={`border-4 px-4 py-1 text-md font-mono rounded-lg whitespace-nowrap mb-3 ${activeMenu === 'all' ? 'bg-restaurant-primary/20 border-restaurant-primary/40' : 'dark:border-restaurant-primary/20 dark:hover:border-restaurant-primary/30'}`}
+            >
+              All
+            </button>
+            {
+              menuItems.map((item) => (
+                <button 
+                  key={item._id}
+                  onClick={() => {
+                    setActiveMenu(item._id);
+                    fetchProducts(searchQuery, item._id);
+                  }}
+                  className={`border-4 px-4 py-1 text-md font-mono rounded-lg whitespace-nowrap mb-3 ${activeMenu === item._id ? 'bg-restaurant-primary/20 border-restaurant-primary/40' : 'dark:border-restaurant-primary/20 dark:hover:border-restaurant-primary/30'}`}
+                >
+                  {item?.name || ""}
+                </button>
+              ))
+            }
+          </div>
+        )
+      }
+
         </div>
 
         {/* Grid of items */}
