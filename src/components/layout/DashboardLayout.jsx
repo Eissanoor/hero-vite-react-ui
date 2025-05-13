@@ -10,8 +10,8 @@ const DashboardLayout = ({ children }) => {
 
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: 'grid' },
-    { name: 'Menu Items', path: '/dashboard/menu', icon: 'list' },
-    { name: 'Products', path: '/dashboard/products', icon: 'package' },
+    { name: 'Menu Collections', path: '/dashboard/menu', icon: 'list' },
+    { name: 'Items', path: '/dashboard/products', icon: 'package' },
     { name: 'Orders', path: '/dashboard/orders', icon: 'shopping-cart' },
     { name: 'History', path: '/dashboard/history', icon: 'history' },
   ];

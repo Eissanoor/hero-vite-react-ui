@@ -103,8 +103,8 @@ const Dashboard = () => {
   }, []);
 
   const statsArr = [
-    { label: 'Total Products', value: statsData.totalProducts },
-    { label: 'Menu Items', value: statsData.menuItems },
+    { label: 'Total Items', value: statsData.totalProducts },
+    { label: 'Menu Collections', value: statsData.menuItems },
     { label: 'Orders Today', value: statsData.ordersToday },
     { label: 'Revenue', value: `${statsData.revenue}` }, 
   ];
@@ -202,15 +202,15 @@ const Dashboard = () => {
         
         <Card>
           <Card.Header>
-            <Card.Title>Popular Products</Card.Title>
+            <Card.Title>Popular Items</Card.Title>
           </Card.Header>
           <Card.Content>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b text-left">
-                    <th className="pb-3 pr-4 font-medium">Product</th>
-                    <th className="pb-3 pr-4 font-medium">Menu</th>
+                    <th className="pb-3 pr-4 font-medium">Items</th>
+                    <th className="pb-3 pr-4 font-medium">Menu Collection</th>
                     <th className="pb-3 font-medium">Sales</th>
                   </tr>
                 </thead>

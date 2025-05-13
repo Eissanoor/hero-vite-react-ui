@@ -338,7 +338,7 @@ const NewOrder = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products..."
+                placeholder="Search items..."
                 className="w-64 rounded-lg border border-gray-300 px-4 py-2 pl-10 focus:border-hero-primary focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
               <svg
@@ -368,7 +368,7 @@ const NewOrder = () => {
             )}
           </div>
           <div className="text-md text-gray-500 font-bold">
-            {products.length} products found
+            {products.length} items found
           </div>
         </div>
 
