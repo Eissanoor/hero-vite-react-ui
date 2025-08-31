@@ -260,7 +260,7 @@ const Products = () => {
       
       {/* Modal for Add/Edit Product */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-scroll">
           <div className="w-full max-w-md rounded-lg bg-white shadow-lg dark:bg-gray-900">
             <div className="border-b p-4">
               <h3 className="text-lg font-medium">{isEditing ? 'Edit Item' : 'Add New Item'}</h3>
