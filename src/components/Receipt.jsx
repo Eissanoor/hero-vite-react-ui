@@ -13,9 +13,9 @@ const Receipt = ({ orderData, items }) => {
   const total = typeof orderData.totalAmount === 'number' ? orderData.totalAmount : (typeof receipt.total === 'number' ? receipt.total : 0);
 
   return (
-    <div className="p-8 max-w-md mx-auto bg-white">
+    <div className="p-8 bg-white">
       <div className="text-center mb-6">
-        <div className="flex justify-center mb-4">
+        <div className="flex justify-center items-center mb-4">
           <div className="relative w-32 h-32 overflow-hidden rounded-full border-4 border-hero-primary shadow-lg">
             <img
               src={logoimage}
