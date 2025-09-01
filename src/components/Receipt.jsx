@@ -50,10 +50,10 @@ const Receipt = ({ orderData, items }) => {
         </div>
       </div>
 
-      <div className="border-t border-gray-300 py-3 mb-3">
+      <div className="border-t-2 border-black py-3 mb-3">
         <table className="w-full">
           <thead>
-            <tr className="text-left text-xs border-b border-gray-200">
+            <tr className="text-left text-xs border-b border-black">
               <th className="pb-2 font-bold">Item Name</th>
               <th className="pb-2 font-bold">Qty</th>
               <th className="pb-2 font-bold">Type</th>
@@ -66,7 +66,7 @@ const Receipt = ({ orderData, items }) => {
   const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
   const qty = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
   return (
-    <tr key={item._id || item.product} className="text-xs border-b border-dashed border-gray-100">
+    <tr key={item._id || item.product} className="text-xs border-b border-dashed border-gray-300">
       <td className="py-1">{item.name || item.product || ''}</td>
       <td className="py-1">{qty}</td>
       <td className="py-1">{item.type || ''}</td>
@@ -78,12 +78,12 @@ const Receipt = ({ orderData, items }) => {
           </tbody>
         </table>
       </div>
-      <div className="border-t border-gray-300 pt-2 flex justify-between font-bold text-sm mb-4">
+      <div className="border-t-2 border-black pt-2 flex justify-between font-bold text-sm mb-4">
         <span>Total</span>
         <span>Rs {typeof total === 'number' ? (total % 1 === 0 ? total : total.toFixed(2)) : '0'}</span>
       </div>
 
-      <div className="text-center text-xs text-gray-500 mt-4 border-t border-gray-100 pt-3">
+      <div className="text-center text-xs text-gray-500 mt-4 border-t border-black pt-3">
         <p>Thank you for your order!</p>
         <p className="mt-2">Note: This is a computer generated receipt.</p>
       </div>
