@@ -15,15 +15,7 @@ const Receipt = ({ orderData, items }) => {
   return (
     <div className="p-8 bg-white">
       <div className="text-center mb-6">
-        <div className="flex justify-center items-center mb-4">
-          <div className="relative w-32 h-32 overflow-hidden rounded-full border-4 border-hero-primary shadow-lg">
-            <img
-              src={logoimage}
-              alt="Restaurant Logo"
-              className=" transform hover:scale-110 transition-transform duration-300"
-            />
-          </div>
-        </div>
+       
         <div className="space-y-2">
           <span className="text-3xl font-extrabold text-gray-800 ml-2">
             ZS Cafe
@@ -63,7 +55,7 @@ const Receipt = ({ orderData, items }) => {
         </div>
       </div>
 
-      <div className="border-t border-b border-gray-200 py-4 mb-4">
+      <div className="border-t border-gray-200 py-4 mb-4">
         <table className="w-full">
           <thead>
             <tr className="text-left text-sm border-b">
@@ -83,17 +75,17 @@ const Receipt = ({ orderData, items }) => {
       <td className="py-1">{item.name || item.product || ''}</td>
       <td className="py-1">{qty}</td>
       <td className="py-1">{item.type || ''}</td>
-      <td className="py-1">Rs {price.toFixed(2)}</td>
-      <td className="py-1 text-right">Rs {(qty * price).toFixed(2)}</td>
+      <td className="py-1">Rs {price % 1 === 0 ? price : price.toFixed(2)}</td>
+      <td className="py-1 text-right">Rs {(qty * price) % 1 === 0 ? (qty * price) : (qty * price).toFixed(2)}</td>
     </tr>
   );
 })} 
           </tbody>
         </table>
       </div>
-      <div className="flex justify-between font-bold mb-6">
+      <div className="border-t border-gray-200 pt-3 flex justify-between font-bold mb-6">
         <span>Total</span>
-        <span>Rs {typeof total === 'number' ? total.toFixed(2) : '0.00'}</span>
+        <span>Rs {typeof total === 'number' ? (total % 1 === 0 ? total : total.toFixed(2)) : '0'}</span>
       </div>
 
       <div className="text-center text-xs text-gray-500 mt-6">
