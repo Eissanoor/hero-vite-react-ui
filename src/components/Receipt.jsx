@@ -70,8 +70,8 @@ const Receipt = ({ orderData, items }) => {
       <td className="py-1">{item.name || item.product || ''}</td>
       <td className="py-1">{qty}</td>
       <td className="py-1">{item.type || ''}</td>
-      <td className="py-1">Rs {price % 1 === 0 ? price : price.toFixed(2)}</td>
-      <td className="py-1 text-right">Rs {(qty * price) % 1 === 0 ? (qty * price) : (qty * price).toFixed(2)}</td>
+      <td className="py-1">{price % 1 === 0 ? price : price.toFixed(2)}</td>
+      <td className="py-1 text-right">{(qty * price) % 1 === 0 ? (qty * price) : (qty * price).toFixed(2)}</td>
     </tr>
   );
 })} 
