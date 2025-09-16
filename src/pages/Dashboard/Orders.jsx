@@ -12,6 +12,8 @@ const Orders = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -141,8 +143,99 @@ const Orders = () => {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  // Handle update order button click
+  const handleUpdateOrder = (orderId) => {
+    navigate(`/dashboard/new-order/${orderId}`);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirmation = (orderId) => {
+    setOrderToDelete(orderId);
+    setDeleteConfirmation(true);
+  };
+
+  // Handle delete order
+  const handleDeleteOrder = async () => {
+    if (!orderToDelete) return;
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/orders/${orderToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Remove the deleted order from the state
+        setHistoryData(prevOrders => prevOrders.filter(order => order._id !== orderToDelete));
+      } else {
+        setError("Failed to delete order");
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setDeleteConfirmation(false);
+      setOrderToDelete(null);
+    }
+  };
+
   return (
     <div>
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity animate-fadeIn" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-slideIn">
+              <div className="bg-white dark:bg-gray-800 px-6 py-6">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                      Delete Order
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Are you sure you want to delete this order? This action cannot be undone.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex flex-col sm:flex-row-reverse sm:justify-end gap-3">
+                <Button
+                  type="button"
+                  className="w-full inline-flex justify-center items-center rounded-lg border border-transparent px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto"
+                  onClick={handleDeleteOrder}
+                >
+                  Delete
+                </Button>
+                <Button
+                  type="button"
+                  className="w-full inline-flex justify-center items-center rounded-lg border border-gray-300 px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-hero-primary sm:mt-0 sm:w-auto dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                  onClick={() => setDeleteConfirmation(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
           <h1 className="text-2xl font-bold">Active Orders</h1>
@@ -279,6 +372,30 @@ const Orders = () => {
                     className="text-sm px-2 py-1"
                   >
                     Print Receipt
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleUpdateOrder(order._id)}
+                    className="text-sm px-2 py-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                  >
+                    <svg className="h-4 w-4 mr-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Update
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteConfirmation(order._id)}
+                    className="text-sm px-2 py-1 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                  >
+                    <svg className="h-4 w-4 mr-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
                   </Button>
 
                   <Button

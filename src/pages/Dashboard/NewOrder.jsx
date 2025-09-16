@@ -2,17 +2,21 @@ import React, { useEffect, useState } from 'react';
 import { Card, Button } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api';
 import Spinner from '../../components/ui/Spinner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
 import { getMegaMenus } from '../../api/megamenu';
 import { useQuery } from '@tanstack/react-query';
 
 const NewOrder = () => {
+  const { orderId } = useParams();
+  const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false); 
-   const [menuItems, setMenuItems] = useState([]);
-     const [loading, setLoading] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
+  const [originalOrder, setOriginalOrder] = useState(null);
   // Listen for online/offline events
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -68,7 +72,6 @@ const NewOrder = () => {
       }
     }
   }, [isOnline]);
-  const navigate = useNavigate();
   const [cartItems, setCartItems] = useState(() => {
     const savedCart = localStorage.getItem("cartItemss");
     return savedCart ? JSON.parse(savedCart) : [];
@@ -78,6 +81,10 @@ const NewOrder = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeMenu, setActiveMenu] = useState('all');
+  const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [showCustomerPopup, setShowCustomerPopup] = useState(false);
+  const [formErrors, setFormErrors] = useState({ customerName: '', phoneNumber: '' });
 
   // Function to fetch products from API
   const fetchProducts = async () => {
@@ -160,6 +167,58 @@ const NewOrder = () => {
     localStorage.setItem("cartItemss", JSON.stringify(cartItems));
   }, [cartItems]);
 
+  // Fetch order data if in update mode
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (orderId) {
+        try {
+          setLoading(true);
+          setIsUpdateMode(true);
+          const token = localStorage.getItem('token');
+          const response = await fetch(`${API_CONFIG.BASE_URL}/api/orders/${orderId}`, {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : undefined
+            }
+          });
+          
+          if (response.ok) {
+            const orderData = await response.json();
+            setOriginalOrder(orderData.data);
+            
+            // Map products to cart items format
+            if (orderData.data && orderData.data.products) {
+              const mappedCartItems = orderData.data.products.map(item => ({
+                ...item.product,
+                quantity: item.quantity,
+                _id: item.product._id
+              }));
+              
+              setCartItems(mappedCartItems);
+              
+              // Set customer info if available
+              if (orderData.data.customerName) {
+                setCustomerName(orderData.data.customerName);
+              }
+              
+              if (orderData.data.phoneNumber) {
+                setPhoneNumber(orderData.data.phoneNumber);
+              }
+            }
+          } else {
+            console.error('Failed to fetch order data');
+            navigate('/dashboard/new-order');
+          }
+        } catch (error) {
+          console.error('Error fetching order:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchOrderData();
+  }, [orderId, navigate]);
+
   // Function to handle printing receipt
   const handlePrintReceipt = (orderResult) => {
     const printContent = `
@@ -201,14 +260,47 @@ const NewOrder = () => {
     }
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
+    // Show the customer info popup
+    setShowCustomerPopup(true);
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const errors = { customerName: '', phoneNumber: '' };
+    
+    if (!customerName.trim()) {
+      errors.customerName = 'Customer name is required';
+      isValid = false;
+    }
+    
+    if (!phoneNumber.trim()) {
+      errors.phoneNumber = 'Phone number is required';
+      isValid = false;
+    } else if (!/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/im.test(phoneNumber.trim())) {
+      errors.phoneNumber = 'Please enter a valid phone number';
+      isValid = false;
+    }
+    
+    setFormErrors(errors);
+    return isValid;
+  };
+
+  const submitOrder = async () => {
+    if (!validateForm()) {
+      return;
+    }
+    
     setorderreceipt(true);
     const orderData = {
       products: cartItems.map((item) => ({
         product: item._id,
         quantity: item.quantity,
-      }))
+      })),
+      customerName,
+      phoneNumber
     };
+    
     if (!isOnline) {
       // Save to pending orders in localStorage
       const pending = JSON.parse(localStorage.getItem('pendingOrders') || '[]');
@@ -220,6 +312,8 @@ const NewOrder = () => {
         createdAt: new Date().toISOString(),
         status: 'Pending (Offline)',
         totalAmount: calculateTotals().subtotal,
+        customerName,
+        phoneNumber,
         products: orderData.products
       };
       handlePrintReceipt(offlineOrderResult);
@@ -228,10 +322,19 @@ const NewOrder = () => {
       alert('Order saved offline and will be sent automatically when you are back online.');
       return;
     }
+    
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/orders`, {
-        method: 'POST',
+      
+      // Determine if this is a create or update operation
+      const url = isUpdateMode 
+        ? `${API_CONFIG.BASE_URL}/api/orders/${orderId}` 
+        : `${API_CONFIG.BASE_URL}/api/orders`;
+        
+      const method = isUpdateMode ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: token ? `Bearer ${token}` : undefined
@@ -251,13 +354,17 @@ const NewOrder = () => {
         setCartItems([]);
         localStorage.removeItem('cartItemss');
 
+        // Reset customer info
+        setCustomerName('');
+        setPhoneNumber('');
+
         // Navigate to orders page
-        // navigate('/dashboard/orders');
+        navigate('/dashboard/orders');
       } else {
-        throw new Error(response.message || 'Failed to place order');
+        throw new Error(response.message || `Failed to ${isUpdateMode ? 'update' : 'place'} order`);
       }
     } catch (error) {
-      console.error('Error placing order:', error);
+      console.error(`Error ${isUpdateMode ? 'updating' : 'placing'} order:`, error);
       setorderreceipt(false);
       // alert(error.message);
     }
@@ -327,6 +434,7 @@ const NewOrder = () => {
       <div className="flex-1 overflow-auto p-6">
         {/* Search bar */}
         <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold mr-4">{isUpdateMode ? 'Update Order' : 'New Order'}</h1>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <input
@@ -565,7 +673,7 @@ const NewOrder = () => {
               <Button className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark" onClick={handleCheckout}
                 isLoading={orderreceipt}
                 isDisabled={orderreceipt}>
-                {orderreceipt ? "Processing..." : "Proceed to Order"}
+                {orderreceipt ? "Processing..." : isUpdateMode ? "Update Order" : "Proceed to Order"}
               </Button>
             </div>
           )}
@@ -617,6 +725,161 @@ const NewOrder = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Customer Info Popup */}
+      {showCustomerPopup && (
+        <div
+          className="fixed inset-0 z-50 overflow-y-auto"
+          aria-labelledby="modal-title"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity animate-fadeIn" aria-hidden="true"></div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+              className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-slideIn"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Decorative header */}
+              <div className="bg-hero-primary text-white p-6 relative">
+                <div className="absolute top-4 right-4">
+                  <button
+                    type="button"
+                    className="text-white hover:text-gray-200 transition-colors duration-200"
+                    onClick={() => setShowCustomerPopup(false)}
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center">
+                  <div className="bg-white bg-opacity-20 rounded-full p-3 mr-4">
+                    <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold" id="modal-title">
+                      Customer Details
+                    </h3>
+                    <p className="text-sm text-white text-opacity-80">
+                      Please enter the customer information to proceed
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 px-6 py-6">
+                <div className="space-y-6">
+                  <div className="relative">
+                    <label htmlFor="customerName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Customer Name
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className={`h-5 w-5 ${formErrors.customerName ? 'text-red-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        id="customerName"
+                        value={customerName}
+                        onChange={(e) => {
+                          setCustomerName(e.target.value);
+                          if (formErrors.customerName) {
+                            setFormErrors({...formErrors, customerName: ''});
+                          }
+                        }}
+                        className={`pl-10 block w-full rounded-lg shadow-sm focus:ring-2 transition-all duration-200 sm:text-sm dark:bg-gray-700 dark:text-white ${
+                          formErrors.customerName 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                            : 'border-gray-300 dark:border-gray-600 focus:border-hero-primary focus:ring-hero-primary'
+                        }`}
+                        placeholder="John Doe"
+                      />
+                      {formErrors.customerName && (
+                        <div className="flex items-center mt-1 text-sm text-red-500">
+                          <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span>{formErrors.customerName}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Phone Number
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className={`h-5 w-5 ${formErrors.phoneNumber ? 'text-red-500' : 'text-gray-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="tel"
+                        id="phoneNumber"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          setPhoneNumber(e.target.value);
+                          if (formErrors.phoneNumber) {
+                            setFormErrors({...formErrors, phoneNumber: ''});
+                          }
+                        }}
+                        className={`pl-10 block w-full rounded-lg shadow-sm focus:ring-2 transition-all duration-200 sm:text-sm dark:bg-gray-700 dark:text-white ${
+                          formErrors.phoneNumber 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                            : 'border-gray-300 dark:border-gray-600 focus:border-hero-primary focus:ring-hero-primary'
+                        }`}
+                        placeholder="+92 123 456 7890"
+                      />
+                      {formErrors.phoneNumber && (
+                        <div className="flex items-center mt-1 text-sm text-red-500">
+                          <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span>{formErrors.phoneNumber}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex flex-col sm:flex-row-reverse sm:justify-between gap-3">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center items-center rounded-lg border border-transparent px-5 py-3 bg-hero-primary text-base font-medium text-white hover:bg-hero-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-hero-primary transition-colors duration-200 sm:w-auto"
+                  onClick={() => {
+                    setShowCustomerPopup(false);
+                    submitOrder();
+                  }}
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Submit Order
+                </button>
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center items-center rounded-lg border border-gray-300 px-5 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-hero-primary transition-colors duration-200 sm:w-auto dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                  onClick={() => setShowCustomerPopup(false)}
+                >
+                  <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Cancel
+                </button>
               </div>
             </div>
           </div>

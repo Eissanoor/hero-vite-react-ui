@@ -12,6 +12,7 @@ import Menu from "./pages/Dashboard/Menu";
 import Orders from "./pages/Dashboard/Orders";
 import NewOrder from "./pages/Dashboard/NewOrder";
 import History from "./pages/Dashboard/History";
+import TodaySales from "./pages/Dashboard/TodaySales";
 import NotFound from "./pages/NotFound";
 import React, { useState, useEffect } from 'react';
 
@@ -57,7 +58,9 @@ const App = () => {
                 <Route path="/dashboard/menu" element={<ProtectedRoute element={<DashboardLayout><Menu /></DashboardLayout>} />} />
                 <Route path="/dashboard/orders" element={<ProtectedRoute element={<DashboardLayout><Orders /></DashboardLayout>} />} />
                 <Route path="/dashboard/new-order" element={<ProtectedRoute element={<DashboardLayout><NewOrder /></DashboardLayout>} />} />
+                <Route path="/dashboard/new-order/:orderId" element={<ProtectedRoute element={<DashboardLayout><NewOrder /></DashboardLayout>} />} />
                 <Route path="/dashboard/history" element={<ProtectedRoute element={<DashboardLayout><History /></DashboardLayout>} />} />
+                <Route path="/dashboard/today-sales" element={<ProtectedRoute element={<DashboardLayout><TodaySales /></DashboardLayout>} />} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>

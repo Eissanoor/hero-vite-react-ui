@@ -7,6 +7,9 @@ const Receipt = ({ orderData, items }) => {
   const orderid = orderData.orderid || receipt.orderid || "Not Available";
   const receiptNumber = receipt.receiptNumber || "N/A";
   const date = receipt.date || orderData.createdAt || new Date().toISOString();
+  // Customer information
+  const customerName = orderData.customerName || receipt.customerName || "";
+  const phoneNumber = orderData.phoneNumber || receipt.phoneNumber || "";
   // Status and reference removed as they're not needed
   const itemList = items || orderData.products || [];
   const total = typeof orderData.totalAmount === 'number' ? orderData.totalAmount : (typeof receipt.total === 'number' ? receipt.total : 0);
@@ -47,6 +50,16 @@ const Receipt = ({ orderData, items }) => {
           <div className="flex justify-between text-xs">
             <span><span className='font-bold'>Date:</span> {new Date(receipt.date).toLocaleString()}</span>
           </div>
+          {customerName && (
+            <div className="flex justify-between text-xs mt-2">
+              <span><span className='font-bold'>Customer:</span> {customerName}</span>
+            </div>
+          )}
+          {phoneNumber && (
+            <div className="flex justify-between text-xs">
+              <span><span className='font-bold'>Phone:</span> {phoneNumber}</span>
+            </div>
+          )}
         </div>
       </div>
 

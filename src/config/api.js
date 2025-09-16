@@ -4,7 +4,8 @@ const API_CONFIG = {
   ENDPOINTS: {
     LOGIN: '/api/users/login',
     ME: '/api/users/me',
-    MEGAMENU: '/api/megamenu/'
+    MEGAMENU: '/api/megamenu/',
+    TODAY_SALES: '/api/orders/today-sales'
   }
 };
 
