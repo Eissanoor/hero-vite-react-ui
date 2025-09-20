@@ -83,6 +83,16 @@ const Orders = () => {
                   status: order.status,
                   totalAmount: order.totalAmount,
                   products: order.products,
+                  customerName: order.customerName,
+                  phoneNumber: order.phoneNumber,
+                  receipt: {
+                    orderid: order.orderid,
+                    date: order.createdAt,
+                    receiptNumber: order.orderid || order.orderid.substring(0, 6),
+                    customerName: order.customerName,
+                    phoneNumber: order.phoneNumber,
+                    total: order.totalAmount
+                  }
                 }}
                 items={order.products.map((p) => ({
                   ...p.product,
