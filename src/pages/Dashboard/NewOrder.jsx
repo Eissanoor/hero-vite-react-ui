@@ -83,6 +83,7 @@ const NewOrder = () => {
   const [activeMenu, setActiveMenu] = useState('all');
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [discount, setDiscount] = useState(0);
   const [showCustomerPopup, setShowCustomerPopup] = useState(false);
   const [formErrors, setFormErrors] = useState({ customerName: '', phoneNumber: '' });
 
@@ -122,28 +123,42 @@ const NewOrder = () => {
     return () => clearTimeout(timeoutId);
   }, [searchQuery]);
 
-  const addToCart = (item) => {
+  const addToCart = (item, isSpicy = false, size = "medium") => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(i => i._id === item._id);
+      // For existing items with same type and size, just increment quantity
+      const existingItem = prevItems.find(i => 
+        i._id === item._id && 
+        i.isSpicy === isSpicy && 
+        i.size === size
+      );
+      
       if (existingItem) {
         return prevItems.map(i =>
-          i._id === item._id
+          (i._id === item._id && i.isSpicy === isSpicy && i.size === size)
             ? { ...i, quantity: i.quantity + 1 }
             : i
         );
       }
-      return [...prevItems, { ...item, quantity: 1, price: item.price }];
+      return [...prevItems, { 
+        ...item, 
+        quantity: 1, 
+        price: item.price, 
+        isSpicy, 
+        size 
+      }];
     });
   };
 
-  const removeFromCart = (itemId) => {
-    setCartItems(prevItems => prevItems.filter(item => item._id !== itemId));
+  const removeFromCart = (itemId, isSpicy, size) => {
+    setCartItems(prevItems => prevItems.filter(item => 
+      !(item._id === itemId && item.isSpicy === isSpicy && item.size === size)
+    ));
   };
 
-  const updateQuantity = (itemId, change) => {
+  const updateQuantity = (itemId, isSpicy, size, change) => {
     setCartItems(prevItems =>
       prevItems.map(item => {
-        if (item._id === itemId) {
+        if (item._id === itemId && item.isSpicy === isSpicy && item.size === size) {
           const newQuantity = item.quantity + change;
           if (newQuantity < 1) {
             return item; // Don't allow quantity below 1
@@ -157,10 +172,9 @@ const NewOrder = () => {
 
   const calculateTotals = () => {
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    // const vat = subtotal * 0.15;
-    // const total = subtotal + vat;
-    // return { subtotal, vat, total };
-    return { subtotal };
+    const discountAmount = discount > subtotal ? subtotal : discount;
+    const total = subtotal - discountAmount;
+    return { subtotal, discountAmount, total };
   };
 
   useEffect(() => {
@@ -185,15 +199,17 @@ const NewOrder = () => {
             const orderData = await response.json();
             setOriginalOrder(orderData.data);
             
-            // Map products to cart items format
-            if (orderData.data && orderData.data.products) {
-              const mappedCartItems = orderData.data.products.map(item => ({
-                ...item.product,
-                quantity: item.quantity,
-                _id: item.product._id
-              }));
-              
-              setCartItems(mappedCartItems);
+              // Map products to cart items format
+              if (orderData.data && orderData.data.products) {
+                const mappedCartItems = orderData.data.products.map(item => ({
+                  ...item.product,
+                  quantity: item.quantity,
+                  _id: item.product._id,
+                  isSpicy: item.isSpicy || false,
+                  size: item.size || "medium"
+                }));
+                
+                setCartItems(mappedCartItems);
               
               // Set customer info if available
               if (orderData.data.customerName) {
@@ -202,6 +218,10 @@ const NewOrder = () => {
               
               if (orderData.data.phoneNumber) {
                 setPhoneNumber(orderData.data.phoneNumber);
+              }
+              
+              if (orderData.data.discount) {
+                setDiscount(orderData.data.discount);
               }
             }
           } else {
@@ -296,9 +316,12 @@ const NewOrder = () => {
       products: cartItems.map((item) => ({
         product: item._id,
         quantity: item.quantity,
+        isSpicy: item.isSpicy || false,
+        size: item.size || "medium"
       })),
       customerName,
-      phoneNumber
+      phoneNumber,
+      discount
     };
     
     if (!isOnline) {
@@ -311,9 +334,10 @@ const NewOrder = () => {
         orderid: `OFFLINE-${Date.now()}`,
         createdAt: new Date().toISOString(),
         status: 'Pending (Offline)',
-        totalAmount: calculateTotals().subtotal,
+        totalAmount: calculateTotals().total,
         customerName,
         phoneNumber,
+        discount,
         products: orderData.products
       };
       handlePrintReceipt(offlineOrderResult);
@@ -561,12 +585,52 @@ const NewOrder = () => {
 
                   {/* Add to cart button */}
                   <div className="border-t p-3">
-                    <Button
-                      onClick={() => addToCart(item)}
-                      className="w-full bg-hero-primary text-white hover:bg-hero-primary-dark"
-                    >
-                      Add Options
-                    </Button>
+                    <div className="flex flex-col space-y-2">
+                      <div className="flex flex-col space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "small")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Small
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "small")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Small Spicy
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "medium")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Medium
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "medium")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Medium Spicy
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "large")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Large
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "large")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Large Spicy
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -602,7 +666,7 @@ const NewOrder = () => {
                 <div className="flex justify-end">
                   <button
                     className="text-lg font-bold text-gray-400 hover:text-gray-600  border-2 border-red-300 hover:border-red-600 rounded-lg px-2"
-                    onClick={() => removeFromCart(item._id)}
+                    onClick={() => removeFromCart(item._id, item.isSpicy, item.size)}
                   >
                     X
                   </button>
@@ -615,27 +679,36 @@ const NewOrder = () => {
                   />
                   <div className="flex flex-col">
                     <h4 className="font-medium">{item.name}</h4>
-                    <p className="text-sm text-gray-500 mt-4">Type: {item.type}</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {item.size.charAt(0).toUpperCase() + item.size.slice(1)}
+                      </div>
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        item.isSpicy 
+                          ? 'bg-red-100 text-red-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {item.isSpicy ? 'Spicy' : 'Normal'}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-between mt-2">
-                  {/* <div className="flex-1"> */}
                   <div className="flex space-x-2 items-center bg-gray-50 dark:bg-gray-900 rounded-md border border-gray-200">
                     <button
                       className="rounded px-2 text-gray-500 hover:bg-gray-100"
-                      onClick={() => updateQuantity(item._id, -1)}
+                      onClick={() => updateQuantity(item._id, item.isSpicy, item.size, -1)}
                     >
                       -
                     </button>
                     <span>{item.quantity}</span>
                     <button
                       className="rounded px-2 text-gray-500 hover:bg-gray-100"
-                      onClick={() => updateQuantity(item._id, 1)}
+                      onClick={() => updateQuantity(item._id, item.isSpicy, item.size, 1)}
                     >
                       +
                     </button>
                   </div>
-                  {/* </div> */}
                   <div className="text-right">
                     <div className="font-medium">Rs {(item.price * item.quantity).toFixed(2)}</div>
                   </div>
@@ -655,6 +728,16 @@ const NewOrder = () => {
                 <span>VAT (15%):</span>
                 <span>SAR {calculateTotals().vat.toFixed(2)}</span>
               </div> */}
+              <div className="mb-2 flex justify-between">
+                <span>Subtotal:</span>
+                <span>Rs {calculateTotals().subtotal.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="mb-2 flex justify-between text-sm text-green-600">
+                  <span>Discount:</span>
+                  <span>- Rs {calculateTotals().discountAmount.toFixed(2)}</span>
+                </div>
+              )}
               <div className="mb-4 flex justify-between font-bold">
                 {
                   loadingProducts ? (
@@ -665,7 +748,7 @@ const NewOrder = () => {
                   ) : (
                     <>
                       <span>Total:</span>
-                      <span>Rs {calculateTotals().subtotal.toFixed(2)}</span>
+                      <span>Rs {calculateTotals().total.toFixed(2)}</span>
                     </>
                   )
                 }
@@ -851,6 +934,27 @@ const NewOrder = () => {
                           <span>{formErrors.phoneNumber}</span>
                         </div>
                       )}
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <label htmlFor="discount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Discount (Rs)
+                    </label>
+                    <div className="relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="number"
+                        id="discount"
+                        value={discount}
+                        min="0"
+                        onChange={(e) => setDiscount(Number(e.target.value))}
+                        className="pl-10 block w-full rounded-lg shadow-sm focus:ring-2 transition-all duration-200 sm:text-sm dark:bg-gray-700 dark:text-white border-gray-300 dark:border-gray-600 focus:border-hero-primary focus:ring-hero-primary"
+                        placeholder="0"
+                      />
                     </div>
                   </div>
                 </div>

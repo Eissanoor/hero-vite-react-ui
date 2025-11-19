@@ -77,7 +77,7 @@ const Orders = () => {
           <div id="receipt">
             ${ReactDOMServer.renderToString(
               <Receipt
-                orderData={{
+                  orderData={{
                   orderid: order._id,
                   createdAt: order.createdAt,
                   status: order.status,
@@ -85,18 +85,22 @@ const Orders = () => {
                   products: order.products,
                   customerName: order.customerName,
                   phoneNumber: order.phoneNumber,
+                  discount: order.discount,
                   receipt: {
                     orderid: order.orderid,
                     date: order.createdAt,
                     receiptNumber: order.orderid || order.orderid.substring(0, 6),
                     customerName: order.customerName,
                     phoneNumber: order.phoneNumber,
+                    discount: order.discount,
                     total: order.totalAmount
                   }
                 }}
                 items={order.products.map((p) => ({
                   ...p.product,
                   quantity: p.quantity,
+                  isSpicy: p.isSpicy || false,
+                  size: p.size || "medium"
                 }))}
               />
             )}
@@ -441,7 +445,23 @@ const Orders = () => {
                     <tbody>
                       {order.products.map((item, idx) => (
                         <tr key={idx} className="border-b">
-                          <td className="py-2">{item?.product?.name || ""}</td>
+                          <td className="py-2">
+                            {item?.product?.name || ""}
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {item?.size && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {item.size.charAt(0).toUpperCase() + item.size.slice(1)}
+                                </span>
+                              )}
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                item.isSpicy 
+                                  ? 'bg-red-100 text-red-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {item.isSpicy ? 'Spicy' : 'Normal'}
+                              </span>
+                            </div>
+                          </td>
                           <td className="py-2">{item?.quantity || 0}</td>
                           <td className="py-2">
                             Rs {item?.product?.price?.toFixed(2) || ""}
@@ -456,20 +476,34 @@ const Orders = () => {
                       ))}
                     </tbody>
                     <tfoot>
+                      {order.discount > 0 && (
+                        <>
+                          <tr>
+                            <td colSpan="3" className="py-2 text-right font-medium">
+                              Subtotal:
+                            </td>
+                            <td className="py-2">
+                              Rs{" "}
+                              {(order.totalAmount + order.discount).toFixed(2)}
+                            </td>
+                          </tr>
+                          <tr>
+                            <td colSpan="3" className="py-2 text-right font-medium text-green-600">
+                              Discount:
+                            </td>
+                            <td className="py-2 text-green-600">
+                              - Rs {order.discount.toFixed(2)}
+                            </td>
+                          </tr>
+                        </>
+                      )}
                       <tr>
                         <td colSpan="3" className="py-2 text-right font-medium">
                           Total:
                         </td>
                         <td className="py-2 font-bold">
                           Rs{" "}
-                          {order.products
-                            .reduce(
-                              (sum, item) =>
-                                sum +
-                                (item.quantity * item?.product?.price || 0),
-                              0
-                            )
-                            .toFixed(2)}
+                          {order.totalAmount.toFixed(2)}
                         </td>
                       </tr>
                     </tfoot>

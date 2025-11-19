@@ -10,6 +10,7 @@ const Receipt = ({ orderData, items }) => {
   // Customer information
   const customerName = orderData.customerName || receipt.customerName || "";
   const phoneNumber = orderData.phoneNumber || receipt.phoneNumber || "";
+  const discount = orderData.discount || receipt.discount || 0;
   // Status and reference removed as they're not needed
   const itemList = items || orderData.products || [];
   const total = typeof orderData.totalAmount === 'number' ? orderData.totalAmount : (typeof receipt.total === 'number' ? receipt.total : 0);
@@ -69,7 +70,6 @@ const Receipt = ({ orderData, items }) => {
             <tr className="text-left text-xs border-b border-black">
               <th className="pb-2 font-bold">Item Name</th>
               <th className="pb-2 font-bold">Qty</th>
-              <th className="pb-2 font-bold">Type</th>
               <th className="pb-2 font-bold">Price</th>
               <th className="pb-2 text-right font-bold">Total</th>
             </tr>
@@ -78,11 +78,17 @@ const Receipt = ({ orderData, items }) => {
             {itemList.map((item) => {
   const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
   const qty = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+  const isSpicy = item.isSpicy || (item.type === 'spicy') || false;
+  const size = item.size || 'medium';
   return (
     <tr key={item._id || item.product} className="text-xs border-b border-dashed border-gray-300">
-      <td className="py-1">{item.name || item.product || ''}</td>
+      <td className="py-1">
+        {item.name || item.product || ''}
+        <div className="text-xs text-gray-600">
+          {size.charAt(0).toUpperCase() + size.slice(1)}{isSpicy ? ' (Spicy)' : ''}
+        </div>
+      </td>
       <td className="py-1">{qty}</td>
-      <td className="py-1">{item.type || ''}</td>
       <td className="py-1">{price % 1 === 0 ? price : price.toFixed(2)}</td>
       <td className="py-1 text-right">{(qty * price) % 1 === 0 ? (qty * price) : (qty * price).toFixed(2)}</td>
     </tr>
@@ -91,9 +97,23 @@ const Receipt = ({ orderData, items }) => {
           </tbody>
         </table>
       </div>
-      <div className="border-t-2 border-black pt-2 flex justify-between font-bold text-sm mb-4">
-        <span>Total</span>
-        <span>Rs {typeof total === 'number' ? (total % 1 === 0 ? total : total.toFixed(2)) : '0'}</span>
+      <div className="border-t-2 border-black pt-2">
+        {discount > 0 && (
+          <div className="flex justify-between text-sm mb-2">
+            <span>Subtotal</span>
+            <span>Rs {typeof total === 'number' ? (total + discount).toFixed(2) : '0'}</span>
+          </div>
+        )}
+        {discount > 0 && (
+          <div className="flex justify-between text-sm text-green-600 mb-2">
+            <span>Discount</span>
+            <span>- Rs {typeof discount === 'number' ? discount.toFixed(2) : '0'}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-bold text-sm mb-4">
+          <span>Total</span>
+          <span>Rs {typeof total === 'number' ? (total % 1 === 0 ? total : total.toFixed(2)) : '0'}</span>
+        </div>
       </div>
 
       <div className="text-center text-xs text-gray-500 mt-4 border-t border-black pt-3">
