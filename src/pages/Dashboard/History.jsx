@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api';
 import * as XLSX from 'xlsx';
+import Receipt from '../../components/Receipt';
+import { useReactToPrint } from 'react-to-print';
 
 const History = () => {
   const [historyData, setHistoryData] = useState([]);
@@ -11,6 +13,12 @@ const History = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const receiptRef = useRef();
+
+  const handlePrint = useReactToPrint({
+    content: () => receiptRef.current,
+  });
 
   // Calculate total amount from all orders
   const totalAmount = historyData.reduce((sum, order) => sum + order.totalAmount, 0);
@@ -161,7 +169,18 @@ const History = () => {
                       <td className="p-4">{item.totalAmount}</td>
                       <td className="p-4">{item.status}</td>
                       <td className="p-4">
-                        <button onClick={() => setSelectedOrder(item)} className="text-blue-500 hover:underline">Details</button>
+                        <div className="flex space-x-2">
+                          <button onClick={() => setSelectedOrder(item)} className="text-blue-500 hover:underline">Details</button>
+                          <button 
+                            onClick={() => {
+                              setSelectedOrder(item);
+                              setShowReceipt(true);
+                            }} 
+                            className="text-green-600 hover:underline"
+                          >
+                            Receipt
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -202,6 +221,44 @@ const History = () => {
               </tbody>
             </table>
             <p className="text-right font-semibold">Total: {selectedOrder.totalAmount}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Modal */}
+      {showReceipt && selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-4 flex justify-between items-center border-b">
+              <h2 className="text-xl font-bold">Order Receipt</h2>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={handlePrint}
+                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                >
+                  Print
+                </button>
+                <button 
+                  onClick={() => setShowReceipt(false)}
+                  className="bg-gray-300 hover:bg-gray-400 px-3 py-1 rounded"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              <div ref={receiptRef}>
+                <Receipt 
+                  orderData={selectedOrder}
+                  items={selectedOrder.products.map(p => ({
+                    ...p,
+                    name: p.product.name,
+                    price: p.product.price,
+                    _id: p._id || p.product._id
+                  }))}
+                />
+              </div>
+            </div>
           </div>
         </div>
       )}
