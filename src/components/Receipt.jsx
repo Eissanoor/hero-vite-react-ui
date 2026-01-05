@@ -4,9 +4,9 @@ import logoimage from "../Image/logo.jpeg"
 const Receipt = ({ orderData, items }) => {
   const receipt = orderData?.receipt || {};
   // Fallbacks for online/offline
-  const orderid = orderData.orderid || receipt.orderid || "Not Available";
-  const receiptNumber = receipt.receiptNumber || "N/A";
-  const date = receipt.date || orderData.createdAt || new Date().toISOString();
+  const orderid = orderData.orderid || receipt.orderid || orderData._id || "N/A";
+  const receiptNumber = receipt.receiptNumber || orderid || "N/A";
+  const date = receipt.date || orderData.createdAt || orderData.date || new Date().toISOString();
   // Customer information
   const customerName = orderData.customerName || receipt.customerName || "";
   const phoneNumber = orderData.phoneNumber || receipt.phoneNumber || "";
@@ -45,11 +45,11 @@ const Receipt = ({ orderData, items }) => {
       <div className="mb-3">
         <div className="flex flex-col space-y-1">
           <div className="flex justify-between text-xs">
-            <span><span className='font-bold'>Order #:</span> {receipt.orderid || "Not Available"}</span>
-            <span><span className='font-bold'>Receipt #:</span> {receipt.receiptNumber}</span>
+            <span><span className='font-bold'>Order #:</span> {orderid}</span>
+            <span><span className='font-bold'>Receipt #:</span> {receiptNumber}</span>
           </div>
           <div className="flex justify-between text-xs">
-            <span><span className='font-bold'>Date:</span> {new Date(receipt.date).toLocaleString()}</span>
+            <span><span className='font-bold'>Date:</span> {new Date(date).toLocaleString()}</span>
           </div>
           {customerName && (
             <div className="flex justify-between text-xs mt-2">
