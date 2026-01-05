@@ -15,6 +15,7 @@ const DashboardLayout = ({ children }) => {
     { name: 'Orders', path: '/dashboard/orders', icon: 'shopping-cart' },
     { name: 'Today Sales', path: '/dashboard/today-sales', icon: 'chart' },
     { name: 'History', path: '/dashboard/history', icon: 'history' },
+   
   ];
 
   const handleLogout = () => {
