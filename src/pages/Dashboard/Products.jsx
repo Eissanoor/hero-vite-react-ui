@@ -320,6 +320,7 @@ const Products = () => {
                     <option value="medium">Medium</option>
                     <option value="large">Large</option>
                     <option value="deal">Deal</option>
+                    <option value="family">Family</option>
                   </select>
                 </div>
                 
