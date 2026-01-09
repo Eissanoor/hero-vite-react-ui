@@ -16,6 +16,8 @@ const Products = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
   const [viewMode, setViewMode] = useState('table');
+  const [searchName, setSearchName] = useState('');
+  const [filterMegaMenu, setFilterMegaMenu] = useState('');
 
   // Function to fetch products from API
   const fetchProducts = async () => {
@@ -38,6 +40,26 @@ const Products = () => {
   // Load products on mount
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  // Fetch menus on mount for filter dropdown
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setLoadingMenus(true);
+    fetch(`${API_CONFIG.BASE_URL}/api/megamenu/`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : undefined
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setMenus(data.data);
+        else console.error('Failed to fetch menus:', data);
+      })
+      .catch(err => {
+        console.error('Error fetching menus:', err);
+      })
+      .finally(() => setLoadingMenus(false));
   }, []);
 
   const handleOpenModal = (product = null) => {
@@ -158,6 +180,17 @@ const Products = () => {
     }
   };
 
+  // Filter products based on search name and megaMenu
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+      const matchesName = searchName === '' || 
+        product.name.toLowerCase().includes(searchName.toLowerCase());
+      const matchesMegaMenu = filterMegaMenu === '' || 
+        product.megaMenu?._id === filterMegaMenu;
+      return matchesName && matchesMegaMenu;
+    });
+  }, [products, searchName, filterMegaMenu]);
+
   // Calculate total value of all products
   const totalValue = products.reduce((sum, product) => sum + product.price, 0);
 
@@ -168,7 +201,7 @@ const Products = () => {
           <h1 className="text-2xl font-bold">Items</h1>
           <div className="flex items-center space-x-3">
             <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-              {products.length} items
+              {filteredProducts.length} items
             </span>
             {/* <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
               Total Value: Rs {totalValue.toFixed(2)}
@@ -194,6 +227,47 @@ const Products = () => {
           </Button>
         </div>
       </div>
+
+      {/* Filters */}
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            type="text"
+            value={searchName}
+            onChange={(e) => setSearchName(e.target.value)}
+            placeholder="Search by product name..."
+            className="w-full"
+          />
+        </div>
+        <div className="min-w-[200px]">
+          <select
+            value={filterMegaMenu}
+            onChange={(e) => setFilterMegaMenu(e.target.value)}
+            className="w-full rounded border px-3 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+          >
+            <option value="">All Menu Collections</option>
+            {menus.map(menu => (
+              <option key={menu._id} value={menu._id}>{menu.name}</option>
+            ))}
+          </select>
+        </div>
+        {(searchName || filterMegaMenu) && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSearchName('');
+              setFilterMegaMenu('');
+            }}
+            className="flex items-center space-x-1"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <span>Clear Filters</span>
+          </Button>
+        )}
+      </div>
       
       {loadingProducts ? (
         <div className="flex justify-center py-8"><Spinner size={32} /></div>
@@ -213,7 +287,7 @@ const Products = () => {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                     <td className="p-3">
                       <img src={product.pic} alt={product.name} className="h-12 w-12 rounded object-cover" />
@@ -241,7 +315,7 @@ const Products = () => {
       </Card>
       ) : (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map(product => (
+        {filteredProducts.map(product => (
           <div key={product._id} className="border rounded p-4 flex flex-col items-center">
             <img src={product.pic} alt={product.name} className="h-40 w-full object-cover mb-2" />
             <span className="font-medium text-lg mb-2">{product.name}</span>
