@@ -601,52 +601,67 @@ const NewOrder = () => {
                             Spicy Family
                           </Button>
                         </div>
-                      ) : (
-                        <div className="flex flex-col space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              onClick={() => addToCart(item, false, "small")}
-                              className="bg-hero-primary text-white hover:bg-hero-primary-dark"
-                            >
-                              Small
-                            </Button>
-                            <Button
-                              onClick={() => addToCart(item, true, "small")}
-                              className="bg-red-600 text-white hover:bg-red-700"
-                            >
-                              Small Spicy
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              onClick={() => addToCart(item, false, "medium")}
-                              className="bg-hero-primary text-white hover:bg-hero-primary-dark"
-                            >
-                              Medium
-                            </Button>
-                            <Button
-                              onClick={() => addToCart(item, true, "medium")}
-                              className="bg-red-600 text-white hover:bg-red-700"
-                            >
-                              Medium Spicy
-                            </Button>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <Button
-                              onClick={() => addToCart(item, false, "large")}
-                              className="bg-hero-primary text-white hover:bg-hero-primary-dark"
-                            >
-                              Large
-                            </Button>
-                            <Button
-                              onClick={() => addToCart(item, true, "large")}
-                              className="bg-red-600 text-white hover:bg-red-700"
-                            >
-                              Large Spicy
-                            </Button>
-                          </div>
+                      ) : item.type === 'small' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "small")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Small
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "small")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Small Spicy
+                          </Button>
                         </div>
-                      )}
+                      ) : item.type === 'medium' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "medium")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Medium
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "medium")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Medium Spicy
+                          </Button>
+                        </div>
+                      ) : item.type === 'large' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "large")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Large
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "large")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Large Spicy
+                          </Button>
+                        </div>
+                      ) : item.type === 'deal' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => addToCart(item, false, "deal")}
+                            className="bg-hero-primary text-white hover:bg-hero-primary-dark"
+                          >
+                            Deal
+                          </Button>
+                          <Button
+                            onClick={() => addToCart(item, true, "deal")}
+                            className="bg-red-600 text-white hover:bg-red-700"
+                          >
+                            Spicy Deal
+                          </Button>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 </Card>
