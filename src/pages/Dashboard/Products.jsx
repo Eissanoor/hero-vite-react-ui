@@ -191,6 +191,35 @@ const Products = () => {
     });
   }, [products, searchName, filterMegaMenu]);
 
+  // Group products by name and organize by size
+  const groupedProducts = useMemo(() => {
+    const grouped = {};
+    filteredProducts.forEach(product => {
+      const name = product.name;
+      if (!grouped[name]) {
+        grouped[name] = {
+          name,
+          description: product.description,
+          pic: product.pic,
+          megaMenu: product.megaMenu,
+          products: [],
+          _id: product._id // Keep first product ID for reference
+        };
+      }
+      grouped[name].products.push(product);
+    });
+    
+    // Convert to array and sort
+    return Object.values(grouped).map(group => ({
+      ...group,
+      small: group.products.find(p => p.type === 'small'),
+      medium: group.products.find(p => p.type === 'medium'),
+      large: group.products.find(p => p.type === 'large'),
+      family: group.products.find(p => p.type === 'family'),
+      deal: group.products.find(p => p.type === 'deal')
+    }));
+  }, [filteredProducts]);
+
   // Calculate total value of all products
   const totalValue = products.reduce((sum, product) => sum + product.price, 0);
 
@@ -201,7 +230,7 @@ const Products = () => {
           <h1 className="text-2xl font-bold">Items</h1>
           <div className="flex items-center space-x-3">
             <span className="text-md font-semibold bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-              {filteredProducts.length} items
+              {viewMode === 'table' ? groupedProducts.length : filteredProducts.length} items
             </span>
             {/* <span className="text-md font-semibold bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 px-3 py-1 rounded-full">
               Total Value: Rs {totalValue.toFixed(2)}
@@ -275,35 +304,72 @@ const Products = () => {
       <Card>
         <Card.Content>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full border-collapse border-2 border-gray-300">
               <thead>
-                <tr className="border-b text-left">
-                  <th className="p-3 font-semibold">Image</th>
-                  <th className="p-3 font-semibold">Name</th>
-                  <th className="p-3 font-semibold">Description</th>
-                  <th className="p-3 font-semibold">Price</th>
-                  <th className="p-3 font-semibold">Type</th>
-                  <th className="p-3 font-semibold">Actions</th>
+                <tr className="bg-red-600 text-white">
+                  <th className="p-4 font-semibold text-left border-2 border-gray-300">Product Name</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Small</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Medium</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Large</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Family</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Deal</th>
+                  <th className="p-4 font-semibold text-center border-2 border-gray-300">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredProducts.map((product) => (
-                  <tr key={product._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                    <td className="p-3">
-                      <img src={product.pic} alt={product.name} className="h-12 w-12 rounded object-cover" />
+                {groupedProducts.map((group, index) => (
+                  <tr key={group.name + index} className="border-b-2 border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td className="p-4 font-bold border-2 border-gray-300">
+                      <div className="flex items-center space-x-3">
+                        {group.pic && (
+                          <img src={group.pic} alt={group.name} className="h-12 w-12 rounded object-cover" />
+                        )}
+                        <div>
+                          <div className="font-semibold">{group.name}</div>
+                          {group.description && (
+                            <div className="text-sm text-gray-500 font-normal">{group.description}</div>
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td className="p-3 font-medium">{product.name}</td>
-                    <td className="p-3">{product.description}</td>
-                    <td className="p-3">{product.price.toFixed(2)}</td>
-                    <td className="p-3">{product.type}</td>
-                    <td className="p-3">
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(product)}>
-                          Edit
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(product._id)} disabled={deletingId === product._id}>
-                          {deletingId === product._id ? <Spinner size={16} /> : 'Delete'}
-                        </Button>
+                    <td className="p-4 text-center font-semibold border-2 border-gray-300">
+                      {group.small ? `Rs ${group.small.price.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="p-4 text-center font-semibold border-2 border-gray-300">
+                      {group.medium ? `Rs ${group.medium.price.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="p-4 text-center font-semibold border-2 border-gray-300">
+                      {group.large ? `Rs ${group.large.price.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="p-4 text-center font-semibold border-2 border-gray-300">
+                      {group.family ? `Rs ${group.family.price.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="p-4 text-center font-semibold border-2 border-gray-300">
+                      {group.deal ? `Rs ${group.deal.price.toFixed(2)}` : '-'}
+                    </td>
+                    <td className="p-4 border-2 border-gray-300">
+                      <div className="flex flex-col space-y-2">
+                        {group.products.map((product) => (
+                          <div key={product._id} className="flex space-x-1">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => handleOpenModal(product)}
+                              className="text-xs"
+                            >
+                              Edit {product.type}
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-red-500 hover:bg-red-50 hover:text-red-700 text-xs" 
+                              onClick={() => handleDelete(product._id)} 
+                              disabled={deletingId === product._id}
+                            >
+                              {deletingId === product._id ? <Spinner size={12} /> : 'Del'}
+                            </Button>
+                          </div>
+                        ))}
                       </div>
                     </td>
                   </tr>
