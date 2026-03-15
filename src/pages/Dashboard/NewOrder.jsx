@@ -382,8 +382,8 @@ const NewOrder = () => {
         setCustomerName('');
         setPhoneNumber('');
 
-        // Navigate to orders page
-        navigate('/dashboard/orders');
+        // Stay on the new order page after placing/updating an order
+        navigate('/dashboard/new-order');
       } else {
         throw new Error(response.message || `Failed to ${isUpdateMode ? 'update' : 'place'} order`);
       }
