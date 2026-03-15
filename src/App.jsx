@@ -20,10 +20,7 @@ import React, { useState, useEffect } from 'react';
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ element }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  // Authentication is relaxed for this app; always render the element
   return element;
 };
 

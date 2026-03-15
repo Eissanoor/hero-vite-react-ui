@@ -41,9 +41,8 @@ export const AuthProvider = ({ children }) => {
       return userData;
     } catch (error) {
       console.error('Error fetching user profile:', error);
-      // If we can't fetch the profile, we should log the user out
-      logout();
-      throw error;
+      // Do not force logout or redirect on profile fetch error (e.g. internet issues)
+      return null;
     }
   };
 
@@ -54,27 +53,16 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       if (authStatus) {
-        try {
-          await fetchUserProfile();
-          setIsAuthenticated(true);
-          
-          // If on login page, redirect to dashboard
-          if (location.pathname === '/login') {
-            navigate('/dashboard', { replace: true });
-          }
-        } catch (error) {
-          // If profile fetch fails, consider user not authenticated
-          setIsAuthenticated(false);
-          if (location.pathname !== '/login') {
-            navigate('/login', { replace: true });
-          }
+        // User marked as authenticated; try to refresh profile but ignore failures
+        await fetchUserProfile();
+        setIsAuthenticated(true);
+        
+        // If on login page, redirect to dashboard
+        if (location.pathname === '/login') {
+          navigate('/dashboard', { replace: true });
         }
       } else {
         setIsAuthenticated(false);
-        // If not authenticated and not already on login page, redirect to login
-        if (location.pathname !== '/login') {
-          navigate('/login', { replace: true });
-        }
       }
       
       setLoading(false);
