@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, Button } from '../../components/HeroUI';
 import API_CONFIG from '../../config/api';
-import Spinner from '../../components/ui/Spinner';
 import { useNavigate, useParams } from 'react-router-dom';
 import Receipt from '../../components/Receipt';
 import ReactDOMServer from 'react-dom/server';
@@ -87,6 +86,16 @@ const NewOrder = () => {
   const [showCustomerPopup, setShowCustomerPopup] = useState(false);
   const [formErrors, setFormErrors] = useState({ customerName: '', phoneNumber: '' });
 
+  const PRODUCTS_CACHE_KEY = 'productsCache_v1';
+  const [cachedProducts, setCachedProducts] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
   // Function to fetch products from API
   const fetchProducts = async () => {
     const token = localStorage.getItem('token');
@@ -100,10 +109,42 @@ const NewOrder = () => {
     return result.data;
   };
 
+  const fetchAllProducts = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_CONFIG.BASE_URL}/api/products`, {
+      headers: { Authorization: token ? `Bearer ${token}` : undefined }
+    });
+    const result = await res.json();
+    if (!result.success) {
+      throw new Error('Failed to fetch products');
+    }
+    return result.data;
+  };
+
+  const saveProductsToCache = (list) => {
+    try {
+      localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(list || []));
+    } catch {
+      // Ignore storage errors (quota, private mode, etc.)
+    }
+    setCachedProducts(list || []);
+  };
+
+  // Keep an up-to-date offline cache (full list)
+  useQuery({
+    queryKey: ['productsAll'],
+    queryFn: fetchAllProducts,
+    enabled: isOnline,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    onSuccess: saveProductsToCache
+  });
+
   // Use React Query for products
-  const { data: products = [], isLoading: loadingProducts } = useQuery({
+  const { data: apiProducts = [], isLoading: loadingProducts } = useQuery({
     queryKey: ['products', searchQuery],
     queryFn: fetchProducts,
+    enabled: isOnline,
     select: (data) => {
       // Filter products based on selected menu
       return activeMenu === 'all'
@@ -113,6 +154,27 @@ const NewOrder = () => {
     // staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: false,
   });
+
+  const offlineProducts = useMemo(() => {
+    const q = (searchQuery || '').trim().toLowerCase();
+    const base = Array.isArray(cachedProducts) ? cachedProducts : [];
+
+    const searched = q
+      ? base.filter((p) => {
+          const name = (p?.name || '').toLowerCase();
+          const description = (p?.description || '').toLowerCase();
+          const type = (p?.type || '').toLowerCase();
+          return name.includes(q) || description.includes(q) || type.includes(q);
+        })
+      : base;
+
+    return activeMenu === 'all'
+      ? searched
+      : searched.filter((product) => product.megaMenu?._id === activeMenu);
+  }, [activeMenu, cachedProducts, searchQuery]);
+
+  const products = isOnline ? apiProducts : offlineProducts;
+  const effectiveLoadingProducts = isOnline ? loadingProducts : false;
 
   // Handle search input change with debounce
   useEffect(() => {
@@ -490,7 +552,7 @@ const NewOrder = () => {
                 </button>
               )}
             </div>
-            {loadingProducts && (
+            {effectiveLoadingProducts && (
               <span className="text-sm text-gray-500">Searching...</span>
             )}
           </div>
@@ -533,7 +595,7 @@ const NewOrder = () => {
         </div>
 
         {/* Grid of items */}
-        {loadingProducts ? (
+        {effectiveLoadingProducts ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
             {[...Array(6)].map((_, index) => (
               <ProductCardSkeleton key={index} />
@@ -565,7 +627,7 @@ const NewOrder = () => {
           <>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2">
               {products.map((item) => (
-                <Card key={item.id} className="flex flex-col overflow-hidden border border-gray-200">
+                <Card key={item._id || item.id} className="flex flex-col overflow-hidden border border-gray-200">
                   <div className="flex-1 p-4">
                     {/* Barcode display area */}
                     <div className="mb-4 flex h-32 w-full items-center justify-center">
@@ -676,7 +738,7 @@ const NewOrder = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="mb-4 text-xl font-bold">Your Cart</h2>
           {
-            loadingProducts ? (
+            effectiveLoadingProducts ? (
               <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
 
             ) : (
@@ -688,13 +750,13 @@ const NewOrder = () => {
         </div>
         <div className="space-y-4">
           {/* Cart items */}
-          {loadingProducts ? (
+          {effectiveLoadingProducts ? (
             [...Array(cartItems.length || 0)].map((_, index) => (
               <CartItemSkeleton key={index} />
             ))
           ) : (
             cartItems.map((item) => (
-              <div className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm'>
+              <div key={`${item._id}-${item.size}-${item.isSpicy ? 'spicy' : 'normal'}`} className='border border-gray-200 rounded-lg px-3 py-2 shadow-sm'>
                 <div className="flex justify-end">
                   <button
                     className="text-lg font-bold text-gray-400 hover:text-gray-600  border-2 border-red-300 hover:border-red-600 rounded-lg px-2"
@@ -703,7 +765,7 @@ const NewOrder = () => {
                     X
                   </button>
                 </div>
-                <div key={item.id} className="flex items-start space-x-4">
+                <div className="flex items-start space-x-4">
                   <img
                     src={item.pic || ""}
                     alt={item.name}
@@ -772,7 +834,7 @@ const NewOrder = () => {
               )}
               <div className="mb-4 flex justify-between font-bold">
                 {
-                  loadingProducts ? (
+                  effectiveLoadingProducts ? (
                     <div className='flex flex-row justify-between w-full'>
                       <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
                       <div className="w-16 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
