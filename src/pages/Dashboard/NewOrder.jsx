@@ -303,42 +303,45 @@ const NewOrder = () => {
 
   // Function to handle printing receipt
   const handlePrintReceipt = (orderResult) => {
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Order Receipt</title>
-          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-        </head>
-        <body>
-          <div id="receipt">
-            ${ReactDOMServer.renderToString(
-      <Receipt
-        orderData={orderResult}
-        items={cartItems}
-      />
-    )}
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              // Only close after printing on non-mobile devices
-              if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) {
-                window.close();
+    try {
+      const itemsSnapshot = Array.isArray(cartItems) ? cartItems : [];
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Order Receipt</title>
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          </head>
+          <body>
+            <div id="receipt">
+              ${ReactDOMServer.renderToString(
+                <Receipt
+                  orderData={orderResult}
+                  items={itemsSnapshot}
+                />
+              )}
+            </div>
+            <script>
+              window.onload = function() {
+                window.print();
+                if (!(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))) {
+                  window.close();
+                }
               }
-            }
-          </script>
-        </body>
-      </html>
-    `;
+            </script>
+          </body>
+        </html>
+      `;
 
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank', 'width=800,height=600');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-    } else {
-      alert('Please allow pop-ups to print the receipt');
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+      } else {
+        alert('Please allow pop-ups to print the receipt');
+      }
+    } catch (e) {
+      console.error('Failed to print receipt:', e);
     }
   };
 
@@ -429,12 +432,27 @@ const NewOrder = () => {
       });
       setorderreceipt(false);
 
-      if (response.ok) {
-        const orderResult = await response.json();
-        console.log('Order Response:', orderResult);
+      const orderResult = await response.json();
+      console.log('Order Response:', orderResult);
 
-        // Handle printing
-        handlePrintReceipt(orderResult);
+      if (response.ok && orderResult.success !== false) {
+        // Use orderResult.data if API returns wrapped response (e.g. { success, data })
+        const orderDataForReceipt = orderResult.data || orderResult;
+        const receiptData = {
+          ...orderDataForReceipt,
+          orderid: orderDataForReceipt.orderid || orderDataForReceipt._id,
+          totalAmount: orderDataForReceipt.totalAmount ?? calculateTotals().total,
+          customerName: orderDataForReceipt.customerName ?? customerName,
+          phoneNumber: orderDataForReceipt.phoneNumber ?? phoneNumber,
+          discount: orderDataForReceipt.discount ?? discount
+        };
+
+        // Handle printing - don't block navigation if it fails
+        try {
+          handlePrintReceipt(receiptData);
+        } catch (e) {
+          console.error('Print receipt failed:', e);
+        }
 
         // Clear cart
         setCartItems([]);
@@ -443,11 +461,17 @@ const NewOrder = () => {
         // Reset customer info
         setCustomerName('');
         setPhoneNumber('');
+        setDiscount(0);
 
-        // Stay on the new order page after placing/updating an order
-        navigate('/dashboard/new-order');
+        // Close popup
+        setShowCustomerPopup(false);
+        // Update order success: navigate to orders page. New order success: stay on page (no navigation)
+        if (isUpdateMode) {
+          navigate('/dashboard/orders');
+        }
       } else {
-        throw new Error(response.message || `Failed to ${isUpdateMode ? 'update' : 'place'} order`);
+        const errMsg = orderResult?.message || orderResult?.error || `Failed to ${isUpdateMode ? 'update' : 'place'} order`;
+        throw new Error(typeof errMsg === 'string' ? errMsg : `Failed to ${isUpdateMode ? 'update' : 'place'} order`);
       }
     } catch (error) {
       console.error(`Error ${isUpdateMode ? 'updating' : 'placing'} order:`, error);
